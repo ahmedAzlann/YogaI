@@ -27,10 +27,7 @@ class _DiscoverpageState extends State<Discoverpage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text("Discover"),
-        backgroundColor: Colors.blue,
-      ),
+
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(16),

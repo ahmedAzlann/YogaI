@@ -18,10 +18,7 @@ class _ReportpageState extends State<Reportpage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text("Report"),
-        backgroundColor: Colors.blue,
-      ),
+
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(16),

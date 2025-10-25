@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:yogai/pages/UserDataCollectionPages/ActivityLevelSelectionPage.dart';
 import 'package:yogai/pages/NavPages/DiscoverPage.dart';
 import 'package:yogai/pages/HomePage.dart';
@@ -12,10 +13,20 @@ import 'package:yogai/pages/SplashScreen.dart';
 import 'package:yogai/pages/UserDataCollectionPages/PlanReadyPage.dart';
 import 'package:yogai/pages/UserDataCollectionPages/UserTypeSelection.dart';
 import 'package:yogai/pages/UserDataCollectionPages/WeeklyGoalSelectionPage.dart';
+//flutter packages
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 
-void main() {
+void main() async {
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark, // or light
+  ));
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 

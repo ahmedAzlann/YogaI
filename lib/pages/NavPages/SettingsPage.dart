@@ -71,10 +71,7 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text("Settings"),
-        backgroundColor: Colors.blue,
-      ),
+
       body: ListView(
         padding: EdgeInsets.all(20),
         children: [

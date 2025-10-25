@@ -4,6 +4,9 @@ import 'package:yogai/pages/NavPages/ReportPage.dart';
 import 'package:yogai/pages/NavPages/SettingsPage.dart';
 import 'package:yogai/pages/NavPages/TrainingPage.dart';
 
+import 'package:flutter/services.dart';
+
+
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -11,6 +14,7 @@ class Homepage extends StatefulWidget {
   @override
   State<Homepage> createState() => _HomepageState();
 }
+
 
 class _HomepageState extends State<Homepage> {
 int _currentPage = 0;
@@ -27,10 +31,11 @@ int _currentPage = 0;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[100],
         elevation: 0,
         title: Text(
           "YogAI",
+
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 28,
