@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "908746856575",
+    "project_id": "yogai-d2c25",
+    "storage_bucket": "yogai-d2c25.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:908746856575:android:2d3ed1def53ac073aa474a",
+        "android_client_info": {
+          "package_name": "com.azlan.yogai.yogai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQ91vWuaQJ5inNGISMAP_BM5cSg-DHt6Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
