@@ -1,0 +1,198 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+
+import '../models/PoseModel.dart';
+import 'YogaPlayerScreen.dart';
+
+class ReadyScreen extends StatefulWidget {
+  final List<PoseModel> poses;
+  final int index; // current pose index
+  final String userId; // optional for progress saving
+
+  const ReadyScreen({
+    super.key,
+    required this.poses,
+    required this.index,
+    required this.userId,
+  });
+
+  @override
+  State<ReadyScreen> createState() => _ReadyScreenState();
+}
+
+class _ReadyScreenState extends State<ReadyScreen> {
+  late int secondsLeft;
+  Timer? _timer;
+  final FlutterTts _tts = FlutterTts();
+
+  @override
+  void initState() {
+    super.initState();
+    secondsLeft = 30;
+    _speak("Get ready for ${widget.poses[widget.index].name}");
+    _startTimer();
+  }
+
+  Future<void> _speak(String text) async {
+    await _tts.setLanguage("en-US");
+    await _tts.setPitch(1.0);
+    await _tts.speak(text);
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      setState(() {
+        secondsLeft--;
+      });
+      if (secondsLeft <= 0) {
+        _timer?.cancel();
+        _goToYoga();
+      }
+    });
+  }
+
+  void _addSeconds(int s) {
+    setState(() {
+      secondsLeft += s;
+    });
+    _speak("Added $s seconds");
+  }
+
+  void _skip() {
+    _timer?.cancel();
+    _goToYoga();
+  }
+
+  void _goToYoga() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => YogaPlayerScreen(
+          poses: widget.poses,
+          index: widget.index,
+          userId: widget.userId,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _tts.stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pose = widget.poses[widget.index];
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // big image
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        pose.imageUrl,
+                        width: 300,
+                        height: 200,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, size: 80),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF42A5F5), Color(0xFF1976D2)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(24),
+                            topRight: Radius.circular(24), ),
+                        ),
+
+                        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "READY TO GO!",
+                              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              pose.name,
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Timer
+                            Text(
+                              "00:$secondsLeft",
+                              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                            const SizedBox(height: 30),
+
+                            // Bottom controls
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () => _addSeconds(20),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white.withOpacity(0.2),
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  ),
+                                  child: const Text(
+                                    "+20s",
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                ElevatedButton(
+
+                                  onPressed: _skip,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  ),
+                                  child: const Text(
+                                    "Skip",
+                                    style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+
+                  ],
+                ),
+              ),
+            )
+          ]
+        )
+      )
+    );
+  }
+}
