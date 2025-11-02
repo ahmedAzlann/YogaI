@@ -9,9 +9,10 @@ class ReadyScreen extends StatefulWidget {
   final List<PoseModel> poses;
   final int index; // current pose index
   final String userId; // optional for progress saving
-
+  final String title;
   const ReadyScreen({
     super.key,
+    required this.title,
     required this.poses,
     required this.index,
     required this.userId,
@@ -36,7 +37,9 @@ class _ReadyScreenState extends State<ReadyScreen> {
 
   Future<void> _speak(String text) async {
     await _tts.setLanguage("en-US");
-    await _tts.setPitch(1.0);
+    await _tts.setSpeechRate(0.5);
+
+    // await _tts.setPitch(1.0);
     await _tts.speak(text);
   }
 
@@ -57,7 +60,7 @@ class _ReadyScreenState extends State<ReadyScreen> {
     setState(() {
       secondsLeft += s;
     });
-    _speak("Added $s seconds");
+    //_speak("Added $s seconds");
   }
 
   void _skip() {
@@ -70,6 +73,7 @@ class _ReadyScreenState extends State<ReadyScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => YogaPlayerScreen(
+          title: widget.title,
           poses: widget.poses,
           index: widget.index,
           userId: widget.userId,
@@ -136,10 +140,20 @@ class _ReadyScreenState extends State<ReadyScreen> {
                               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              pose.name,
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
+                            Flexible(
+                              child: Text(
+                                pose.name,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                                softWrap: true,
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.visible,
+                              ),
                             ),
+
                             const SizedBox(height: 20),
 
                             // Timer

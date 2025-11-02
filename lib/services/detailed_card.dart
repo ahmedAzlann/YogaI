@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/PoseModel.dart';
+import '../models/chewie_player_widget.dart';
 import '../pages/ReadyScreen.dart';
 import 'firebase_service.dart';
 
@@ -20,7 +21,7 @@ class YogaPoseDetailScreen extends StatefulWidget {
 
 class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
   late List<String> categories;
-
+  bool _showVideo = false;
   void initcategory() {
     switch (widget.title) {
       case "Arm Balance Yoga Poses":
@@ -48,10 +49,10 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
         categories = ["hip opener"];
         break;
       case "Backbend Yoga Poses":
-        categories = ["backbend", "Sitting"];
+        categories = ["backbend"];
         break;
       case "Abdominals":
-        categories = ["twisting", "stretching"];
+        categories = ["twisting"];
         break;
       case "Arms":
         categories = ["arm"];
@@ -75,10 +76,10 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
         categories = ["twisting", "hip opener"];
         break;
       case "Lungs":
-        categories = ["breathing", "stretching", "twisting"];
+        categories = ["breathing", "stretching"];
         break;
       case "Yoga Poses For Anxiety":
-        categories = ["stretching", "balance"];
+        categories = ["calm","stretching", "balance"];
         break;
       case "Yoga Poses For Back Pain":
         categories = ["stretching", "forwardbend"];
@@ -276,16 +277,11 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
                   color: Colors.black12,
                   ),
                   child: Center(
-                  child: IconButton(
-                  icon: const Icon(
-                  Icons.play_circle_fill,
-                  color: Colors.blueAccent,
-                  size: 64,
-                  ),
-                  onPressed: () {
-                  // open video URL
-                  },
-                  ),
+                    child: ChewiePlayerWidget(
+                      videoUrl: videoUrl!,
+                      autoPlay: false,
+                      looping: false,
+                    )
                   ),
                   ),
                   const SizedBox(height: 20),
@@ -417,7 +413,7 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
                                onPressed: () {
                                  final poseModels = poses.map((d) => PoseModel.fromDoc(d)).toList();
                                  Navigator.push(context, MaterialPageRoute(
-                                   builder: (_) => ReadyScreen(poses: poseModels, index: 0, userId: "user1"), //add poses.length;
+                                   builder: (_) => ReadyScreen(poses: poseModels, index: 0, userId: "user1",title: widget.title), //add poses.length;
                                  ));
 
                                },

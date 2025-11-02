@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
+import '../../services/firebase_service.dart';
 
 class Reportpage extends StatefulWidget {
   const Reportpage({super.key});
@@ -8,68 +11,111 @@ class Reportpage extends StatefulWidget {
 }
 
 class _ReportpageState extends State<Reportpage> {
-  final Map<String, String> reportSummary = {
-    "Weekly Progress": "4 out of 5 sessions completed",
-    "Calories Burned": "560 kcal",
-    "Most Practiced Exercise": "Full Body Yoga",
-  };
+
 
   @override
   Widget build(BuildContext context) {
+    final titlesRef = FirebaseFirestore.instance
+        .collection('user_progress')
+        .doc("user1")
+        .collection('titles')
+        .orderBy('lastUpdated', descending: true);
+
     return Scaffold(
-      backgroundColor: Colors.white,
-
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Your Weekly Report",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-
-              ...reportSummary.entries.map((entry) {
-                return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 4,
-                  margin: EdgeInsets.symmetric(vertical: 8),
-                  child: ListTile(
-                    title: Text(entry.key, style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(entry.value),
-                  ),
-                );
-              }).toList(),
-
-              Spacer(),
-
-              Center(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.blue,
-                    minimumSize: Size(200, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                  ),
-                  onPressed: () {
-                    print("Export Report pressed");
-                    // TODO: Implement export report functionality
-                  },
-                  child: Text(
-                    "Export Report",
-                    style: TextStyle(fontSize: 18),
-                  ),
-                ),
-              ),
-            ],
-          ),
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text(
+          "Your Yoga Progress",
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
+        centerTitle: true,backgroundColor: Colors.grey[100],
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: titlesRef.snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(
+              child: Text(
+                "No progress yet. Start a session!",
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            );
+          }
+
+          final titles = snapshot.data!.docs;
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: titles.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, i) {
+              final doc = titles[i];
+              final data = doc.data() as Map<String, dynamic>;
+              final title = data['title'] ?? 'Untitled';
+              final percent = data['completionPercent'] ?? 0;
+              final lastUpdated = data['lastUpdated'] ?? '';
+              final completedCount =
+                  (data['completedPoses'] as List?)?.length ?? 0;
+
+              return Card(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                elevation: 3,
+                child: ListTile(
+                  contentPadding:
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  title: Text(
+                    title,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: percent / 100,
+                        minHeight: 6,
+                        borderRadius: BorderRadius.circular(4),
+                        backgroundColor: Colors.grey[300],
+                        color: Colors.blueAccent,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "$percent% completed • $completedCount poses done",
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                      Text(
+                        "Last updated: $lastUpdated",
+                        style:
+                        const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                      size: 18, color: Colors.grey),
+                  onTap: () {
+                    // Go to detail screen for this title
+                   /*  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TitleDetailScreen(
+                          userId: userId,
+                          title: title,
+                        ),
+                      ),
+                    );   */
+                  },
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

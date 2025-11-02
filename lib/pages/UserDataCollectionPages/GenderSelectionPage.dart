@@ -35,7 +35,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
           child: Text("Skip", style: TextStyle(color: Colors.black)),
         ),
       ],
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       elevation: 0,
     );
   }
@@ -62,6 +62,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       appBar: buildProgressAppBar(
         context,
         currentPage,

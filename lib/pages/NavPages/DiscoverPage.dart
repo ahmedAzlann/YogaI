@@ -26,7 +26,7 @@ class _DiscoverpageState extends State<Discoverpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
 
       body: SafeArea(
         child: Padding(

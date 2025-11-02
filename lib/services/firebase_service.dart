@@ -5,11 +5,14 @@ class FirestoreService{
 
   FirestoreService({required this.categories});
   final CollectionReference pose = FirebaseFirestore.instance.collection("poses");
-
+  final CollectionReference user = FirebaseFirestore.instance.collection("user_progress");
   //read from db
 
 Stream<QuerySnapshot> getPoseStream(){
   final poseStream = pose.where('categories', arrayContainsAny: categories).snapshots();
      return poseStream;
 }
+
+
+
 }

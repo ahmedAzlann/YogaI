@@ -54,7 +54,7 @@ class _PhysicalStatsInputScreenState extends State<PhysicalStatsInputScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       appBar: buildProgressAppBar(
         context,
         currentPage,
