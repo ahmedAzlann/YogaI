@@ -1,10 +1,26 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yogai/pages/HomePage.dart';
+import 'package:yogai/pages/UserDataCollectionPages/GeneratingPlanPage.dart';
+import 'package:yogai/pages/UserDataCollectionPages/PlanReadyPage.dart';
 
 class PhysicalStatsInputScreen extends StatefulWidget {
+  final String usertype;
+  final String selectedGoal;
+  final String selectedActivityLevel;
+  final int selectedSessions;
+  final String selectedFirstDay;
 
-
-
+  const PhysicalStatsInputScreen({
+    Key? key,
+    required this.selectedSessions,
+    required this.selectedFirstDay,
+    required this.selectedActivityLevel,
+    required this.usertype,
+    required this.selectedGoal,
+  }) : super(key: key);
 
   @override
   _PhysicalStatsInputScreenState createState() => _PhysicalStatsInputScreenState();
@@ -21,9 +37,21 @@ class _PhysicalStatsInputScreenState extends State<PhysicalStatsInputScreen> {
   bool isHeightInFt = true;
 
   void getMyPlan() {
-    print("Weight: $weight ${isWeightInLbs ? 'lbs' : 'kg'}, Height: $heightFeet ft $heightInch in");
-    Navigator.pushReplacementNamed(context, '/GeneratingPlanPage'); // Navigate to Home Page after collecting data
-  }
+    print("Weight: $weight ${isWeightInLbs ? 'lbs' : 'kg'}, Height: $heightFeet  ft $heightInch in");
+
+
+    Get.to(() => PlanReadyScreen(
+      usertype: widget.usertype,
+      selectedGoal: widget.selectedGoal,
+      selectedActivityLevel: widget.selectedActivityLevel,
+      selectedSessions: widget.selectedSessions,
+      selectedFirstDay: widget.selectedFirstDay,
+      weight: weight,
+      heightFeet: heightFeet,
+      heightInch: heightInch,
+    ));
+
+    }
   AppBar buildProgressAppBar(BuildContext context, int currentPage, int totalPages, VoidCallback onBack, VoidCallback onSkip) {
     return AppBar(
       leading: currentPage > 0 ? IconButton(
@@ -41,15 +69,26 @@ class _PhysicalStatsInputScreenState extends State<PhysicalStatsInputScreen> {
           child: Text("Skip", style: TextStyle(color: Colors.black)),
         ),
       ],
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100]
+      ,
       elevation: 0,
     );
   }
 
+  Future<void> skipfunction() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (FirebaseAuth.instance.currentUser == null) {
+      await FirebaseAuth.instance.signInAnonymously();
+    }
+    await prefs.setBool('onboarding_done', true);
+    Get.offAll(() => Homepage());
+  }
 
   void goBack() {
     Navigator.pop(context);
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -60,13 +99,7 @@ class _PhysicalStatsInputScreenState extends State<PhysicalStatsInputScreen> {
         currentPage,
         totalPages,
             () => Navigator.pop(context),  // Back button
-            () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => Homepage()),
-                (route) => false,
-          );
-        },  // Skip button
+        skipfunction,  // Skip button
       ),
 
       body: SafeArea (

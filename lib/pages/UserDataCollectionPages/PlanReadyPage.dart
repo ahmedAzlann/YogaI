@@ -1,9 +1,66 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yogai/pages/HomePage.dart';
 
-class PlanReadyScreen extends StatelessWidget {
+class PlanReadyScreen extends StatefulWidget {
+  final String usertype;
+  final String selectedGoal;
+  final String selectedActivityLevel;
+  final int selectedSessions;
+  final String selectedFirstDay;
+  final double weight;
+  final int heightFeet;
+  final int heightInch;
+
+  const PlanReadyScreen({
+    Key? key,
+    required this.heightFeet,
+    required this.heightInch,
+    required this.weight,
+    required this.selectedSessions,
+    required this.selectedFirstDay,
+    required this.selectedActivityLevel,
+    required this.usertype,
+    required this.selectedGoal,
+  }) : super(key: key);
+
+  @override
+  State<PlanReadyScreen> createState() => _PlanReadyScreenState();
+}
+
+class _PlanReadyScreenState extends State<PlanReadyScreen> {
+  late final user;
+  late final prefs;
   void goToHomePage(BuildContext context) {
-    Navigator.pushNamedAndRemoveUntil(context, '/HomePage', (route) => false);
+    pushtofirebase();
+   // Navigator.pushNamedAndRemoveUntil(context, '/HomePage', (route) => false);
   }
+
+
+  Future<void> pushtofirebase() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    user = currentUser ?? await FirebaseAuth.instance.signInAnonymously();
+
+    await FirebaseFirestore.instance.collection('users').doc(user.user?.uid ?? currentUser?.uid).set({
+      'weight': widget.weight,
+      'activitylevel': widget.selectedActivityLevel,
+      'usertype': widget.usertype,
+      'goal': widget.selectedGoal,
+      'sessions': widget.selectedSessions,
+      'firstday': widget.selectedFirstDay,
+      'heightfeet': widget.heightFeet,
+      'heightinch': widget.heightInch,
+    });
+
+    prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_done', true);
+
+    Get.offAll(() => Homepage());
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -62,9 +119,7 @@ class PlanReadyScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
-                onPressed: () {
-                  // Start plan action
-                },
+                onPressed: pushtofirebase,
                 child: Text(
                   "START NOW",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white),

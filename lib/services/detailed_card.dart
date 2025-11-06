@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/PoseModel.dart';
 import '../models/chewie_player_widget.dart';
 import '../pages/ReadyScreen.dart';
 import 'firebase_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class YogaPoseDetailScreen extends StatefulWidget {
   final String title;
@@ -20,10 +22,23 @@ class YogaPoseDetailScreen extends StatefulWidget {
 }
 
 class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
+  String uid = FirebaseAuth.instance.currentUser!.uid;
+
   late List<String> categories;
-  bool _showVideo = false;
   void initcategory() {
     switch (widget.title) {
+      case "Morning Boost Flow":
+        categories = ["stretching"];
+        break;
+      case "Challenging Yoga Poses":
+        categories = ["hard"];
+        break;
+      case "Stress Release Flow":
+        categories = ["twisting"];
+        break;
+      case "Sleep Reset Flow":
+        categories = ["beginner","breathing"];
+        break;
       case "Arm Balance Yoga Poses":
         categories = ["arm", "balance"];
         break;
@@ -58,7 +73,7 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
         categories = ["arm"];
         break;
       case "Hamstrings":
-        categories = ["stretching", "sitting"];
+        categories = ["sitting"];
         break;
       case "Hips":
         categories = ["twisting", "hip opener"];
@@ -79,13 +94,13 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
         categories = ["breathing", "stretching"];
         break;
       case "Yoga Poses For Anxiety":
-        categories = ["calm","stretching", "balance"];
+        categories = ["calm","stretching"];
         break;
       case "Yoga Poses For Back Pain":
         categories = ["stretching", "forwardbend"];
         break;
       case "Yoga Poses For Calm":
-        categories = ["balance", "breathing"];
+        categories = ["breathing"];
         break;
       case "Yoga Poses For Digestion":
         categories = ["backbend", "twisting"];
@@ -97,13 +112,13 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
         categories = ["forwardbend", "breathing"];
         break;
       case "Yoga For High Blood Pressure":
-        categories = ["standing", "core"];
+        categories = ["standing"];
         break;
       case "Yoga For Neck Pain":
-        categories = ["stretching", "core"];
+        categories = ["stretching"];
         break;
       case "Yoga Poses For Sciatica":
-        categories = ["sitting", "core", "backbend"];
+        categories = ["sitting","backbend"];
         break;
       default:
         categories = [];
@@ -238,19 +253,7 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
                   child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                  Center(
-                  child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: imageUrl.isNotEmpty
-                  ? Image.network(
-                  imageUrl,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  )
-                      : const Icon(Icons.image_not_supported, size: 100),
-                  ),
-                  ),
+
                   const SizedBox(height: 16),
                   Text(
                   name,
@@ -346,13 +349,27 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
                   ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: imageUrl.isNotEmpty
-                  ? Image.network(
-                  imageUrl,
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
+                  ?
+                  CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    fadeInDuration: const Duration(milliseconds: 300),
+                    fadeOutDuration: const Duration(milliseconds: 200),
+                    placeholderFadeInDuration: const Duration(milliseconds: 150),
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey.shade200,
+                      child: const Center(
+                        child: CircularProgressIndicator(strokeWidth: 1.5),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                    ),
                   )
-                      : const Icon(
+                  : const Icon(
                   Icons.image_not_supported,
                   size: 60,
                   color: Colors.grey,
@@ -413,7 +430,7 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
                                onPressed: () {
                                  final poseModels = poses.map((d) => PoseModel.fromDoc(d)).toList();
                                  Navigator.push(context, MaterialPageRoute(
-                                   builder: (_) => ReadyScreen(poses: poseModels, index: 0, userId: "user1",title: widget.title), //add poses.length;
+                                   builder: (_) => ReadyScreen(poses: poseModels, index: 0, userId: uid,title: widget.title), //add poses.length;
                                  ));
 
                                },

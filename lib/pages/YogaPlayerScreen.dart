@@ -79,22 +79,31 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       'lastUpdated': now,
     }, SetOptions(merge: true));
 
-    // Add pose progress to completedPoses array
-    await titleDoc.update({
-      'completedPoses': FieldValue.arrayUnion([
-        {
-          'poseId': pose.id,
-          'poseName': pose.name,
-          'status': status,
-          'timestamp': now,
-        }
-      ])
-    });
-
-    // Fetch current data to calculate completion percent
+    // Fetch existing data
     final snapshot = await titleDoc.get();
-    final completedPoses = (snapshot.data()?['completedPoses'] ?? []) as List;
-    final totalCount = widget.poses.length;
+    final existing = (snapshot.data()?['completedPoses'] ?? []) as List;
+
+    // Check if this pose is already recorded
+    final alreadyDone = existing.any((p) => p['poseId'] == pose.id);
+
+    // Only add new poses if not already logged
+    if (!alreadyDone) {
+      await titleDoc.update({
+        'completedPoses': FieldValue.arrayUnion([
+          {
+            'poseId': pose.id,
+            'poseName': pose.name,
+            'status': status,
+            'timestamp': now,
+          }
+        ])
+      });
+    }
+
+    // Fetch updated snapshot to calculate completion percent
+    final updatedSnapshot = await titleDoc.get();
+    final completedPoses = (updatedSnapshot.data()?['completedPoses'] ?? []) as List;
+    final totalCount = widget.poses.isEmpty ? 1 : widget.poses.length;
     final percent = ((completedPoses.length / totalCount) * 100).round();
 
     // Update progress percentage
@@ -103,6 +112,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       'lastUpdated': now,
     });
   }
+
 
 
   void _onDone() async {
@@ -128,6 +138,10 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
           _speak("Start 30 seconds ${widget.poses[widget.index].name}");
 
           }
+
+        if(secondsLeft == 15){
+         _speak("This exercise ${widget.poses[currentIndex].benefits}");
+        }
         // Speak countdown for last 3 seconds
         if (secondsLeft == 3 || secondsLeft == 2 || secondsLeft == 1) {
           await _speak("$secondsLeft");
@@ -173,7 +187,29 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       ));
     }
   }
-
+  Widget _quitOption(BuildContext context, String text) {
+    return InkWell(
+      onTap: () => Navigator.pop(context, true),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
   void _showPoseInfo(PoseModel pose) {
     _pauseTimer(); // <-- pause the timer before opening sheet
 
@@ -189,6 +225,54 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       // resume timer when sheet is closed
       if (_isPaused) _startTimer();
     });
+  }
+
+  Future<void> _showbox() async {
+    _pauseTimer();
+
+    final shouldQuit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.blue.shade700,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Quit',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white, size: 26),
+              onPressed: () => Navigator.pop(context, false),
+              tooltip: 'Cancel',
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _quitOption(context, 'Just take a look'),
+            const SizedBox(height: 10),
+            _quitOption(context, 'Too hard'),
+            const SizedBox(height: 10),
+            _quitOption(context, "Don't know how to do it"),
+           ],
+        ),
+      ),
+    );
+
+    if (shouldQuit == true) {
+      Navigator.pop(context);
+    }
   }
 
 
@@ -209,155 +293,165 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     final pose = widget.poses[currentIndex];
 
     
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                  child:
-                      Image.network(
-                      pose.imageUrl,
-                      height: 240,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                                   ),
-                ),
-            /*    Container(
-                  height: 220,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+    return PopScope(
+      canPop: false, // stops default popping
+      onPopInvoked: (didPop) async {
+        if (!didPop) {
+          await _showbox(); // show your quit confirmation
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
                     borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(24),
                       bottomRight: Radius.circular(24),
                     ),
+                    child:
+                        Image.network(
+                        pose.imageUrl,
+                        height: 240,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                                     ),
                   ),
-                ), */
-                Positioned(
-                  top: 40,
-                  left: 16,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black54,
-                    child: IconButton(
+              /*    Container(
+                    height: 220,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(24),
+                        bottomRight: Radius.circular(24),
+                      ),
+                    ),
+                  ), */
+                  Positioned(
+                    top: 40,
+                    left: 16,
+                    child: CircleAvatar(
+                      backgroundColor: Colors.black54,
+                      child: IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: _showbox,
+                    ),
+      
+      
                     ),
                   ),
-                ),
-              ],
-            ),
-            // Top: Video or Image
-
-
-            // Bottom section
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(30),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Exercise name + reps
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            pose.name.toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1,
+                ],
+              ),
+              // Top: Video or Image
+      
+      
+              // Bottom section
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(30),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Exercise name + reps
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              pose.name.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1,
+                              ),
+                              softWrap: true,
+                              textAlign: TextAlign.center,
                             ),
-                            softWrap: true,
-                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () => _showPoseInfo(pose),
-                          child: const Icon(
-                            Icons.help_outline,
-                            color: Colors.blueAccent,
-                            size: 26,
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => _showPoseInfo(pose),
+                            child: const Icon(
+                              Icons.help_outline,
+                              color: Colors.blueAccent,
+                              size: 26,
+                            ),
                           ),
+                        ],
+                      ),
+      
+      
+      
+      
+      
+                      const SizedBox(height: 16),
+                      Text(
+                        "00:$secondsLeft",
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w800,
                         ),
-                      ],
-                    ),
-
-
-
-
-
-                    const SizedBox(height: 16),
-                    Text(
-                      "00:$secondsLeft",
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w800,
                       ),
-                    ),
-                    const SizedBox(height: 24),
-
-
-                    // DONE button (just above the bottom nav)
-                    ElevatedButton.icon(
-                      onPressed: _isPaused?_resumeTimer : _pauseTimer,
-                      icon: Icon(_isPaused? Icons.play_arrow_rounded: Icons.pause, color: Colors.white),
-                      label: Text(
-                        _isPaused ? "Resume" : "Pause",
-                        style: const TextStyle(color: Colors.white, fontSize: 18),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                      const SizedBox(height: 24),
+      
+      
+                      // DONE button (just above the bottom nav)
+                      ElevatedButton.icon(
+                        onPressed: _isPaused?_resumeTimer : _pauseTimer,
+                        icon: Icon(_isPaused? Icons.play_arrow_rounded: Icons.pause, color: Colors.white),
+                        label: Text(
+                          _isPaused ? "Resume" : "Pause",
+                          style: const TextStyle(color: Colors.white, fontSize: 18),
                         ),
-                        minimumSize: const Size(220, 55),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          minimumSize: const Size(220, 55),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 80),
-
-                    // Bottom nav (Previous / Skip)
-
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              TextButton.icon(
-                                onPressed: _goPrevious,
-                                icon: const Icon(Icons.skip_previous, color: Colors.grey,size: 34,),
-                                label: const Text(
-                                  "Previous",
-                                  style: TextStyle(color: Colors.grey,fontSize: 20),
+                      const SizedBox(height: 80),
+      
+                      // Bottom nav (Previous / Skip)
+      
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: _goPrevious,
+                                  icon: const Icon(Icons.skip_previous, color: Colors.grey,size: 34,),
+                                  label: const Text(
+                                    "Previous",
+                                    style: TextStyle(color: Colors.grey,fontSize: 20),
+                                  ),
                                 ),
-                              ),
-                              TextButton.icon(
-                                onPressed: _onSkip,
-                                icon: const Icon(Icons.skip_next, color: Colors.grey,size: 34,),
-                                label: const Text(
-                                  "Skip",
-                                  style: TextStyle(color: Colors.grey,fontSize: 20),
+                                TextButton.icon(
+                                  onPressed: _onSkip,
+                                  icon: const Icon(Icons.skip_next, color: Colors.grey,size: 34,),
+                                  label: const Text(
+                                    "Skip",
+                                    style: TextStyle(color: Colors.grey,fontSize: 20),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-
-
+                        ],
+      
+      
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

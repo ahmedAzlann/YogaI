@@ -92,121 +92,124 @@ class _ReadyScreenState extends State<ReadyScreen> {
   @override
   Widget build(BuildContext context) {
     final pose = widget.poses[widget.index];
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // big image
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        pose.imageUrl,
-                        width: 300,
-                        height: 200,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, size: 80),
+    return PopScope(
+        canPop: false, // stops default popping
+        child: Scaffold(
+        backgroundColor: Colors.grey[100],
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // big image
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          pose.imageUrl,
+                          width: 300,
+                          height: 200,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, size: 80),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                    Expanded(
-                      child: Container(
-                        width: double.infinity,
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF42A5F5), Color(0xFF1976D2)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF42A5F5), Color(0xFF1976D2)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(24),
+                              topRight: Radius.circular(24), ),
                           ),
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            topRight: Radius.circular(24), ),
-                        ),
 
-                        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
 
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              "READY TO GO!",
-                              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                            const SizedBox(height: 8),
-                            Flexible(
-                              child: Text(
-                                pose.name,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                                softWrap: true,
-                                textAlign: TextAlign.center,
-                                overflow: TextOverflow.visible,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                "READY TO GO!",
+                                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
                               ),
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Timer
-                            Text(
-                              "00:$secondsLeft",
-                              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                            const SizedBox(height: 30),
-
-                            // Bottom controls
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () => _addSeconds(20),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white.withOpacity(0.2),
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              const SizedBox(height: 8),
+                              Flexible(
+                                child: Text(
+                                  pose.name,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
                                   ),
-                                  child: const Text(
-                                    "+20s",
-                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                  ),
+                                  softWrap: true,
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.visible,
                                 ),
-                                const SizedBox(width: 12),
-                                ElevatedButton(
+                              ),
 
-                                  onPressed: _skip,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              const SizedBox(height: 20),
+
+                              // Timer
+                              Text(
+                                "00:$secondsLeft",
+                                style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                              const SizedBox(height: 30),
+
+                              // Bottom controls
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () => _addSeconds(20),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white.withOpacity(0.2),
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                    ),
+                                    child: const Text(
+                                      "+20s",
+                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
                                   ),
-                                  child: const Text(
-                                    "Skip",
-                                    style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                                  const SizedBox(width: 12),
+                                  ElevatedButton(
+
+                                    onPressed: _skip,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                    ),
+                                    child: const Text(
+                                      "Skip",
+                                      style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    )
+                      )
 
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            )
-          ]
+              )
+            ]
+          )
         )
-      )
+      ),
     );
   }
 }

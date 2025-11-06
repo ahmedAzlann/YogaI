@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yogai/pages/HomePage.dart';
 import 'package:yogai/pages/UserDataCollectionPages/UserTypeSelection.dart';
 
@@ -8,10 +11,10 @@ class GenderSelectionScreen extends StatefulWidget {
 }
 
 class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
   int currentPage = 0;
   int totalPages = 6;
-  String selectedGender = "Male"; // Default selection
+  String selectedGender = "Male";
 
   List<Map<String, dynamic>> genderOptions = [
     {"gender": "Male", "image": "images/male.png", "color": Colors.blue},
@@ -20,10 +23,9 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
 
   AppBar buildProgressAppBar(BuildContext context, int currentPage, int totalPages, VoidCallback onBack, VoidCallback onSkip) {
     return AppBar(
-      leading: currentPage > 0 ? IconButton(
-        icon: Icon(Icons.arrow_back),
-        onPressed: onBack,
-      ) : SizedBox(width: 48), // Empty space on first page
+      leading: currentPage > 0
+          ? IconButton(icon: Icon(Icons.arrow_back), onPressed: onBack)
+          : SizedBox(width: 48),
       title: LinearProgressIndicator(
         value: (currentPage + 1) / totalPages,
         backgroundColor: Colors.grey[300],
@@ -40,48 +42,39 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
     );
   }
 
-
-  void goToHomeScreen() {
-    // TODO: Replace with navigation to Home Screen
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => Homepage()),
-          (Route<dynamic> route) => false,   // Remove all previous routes
-    );
-
-  }
-
   Color getCardBackgroundColor(String gender) {
     return selectedGender == gender
-        ? gender == "Male"
-        ? Colors.blue
-        : Colors.pink
+        ? (gender == "Male" ? Colors.blue : Colors.pink)
         : Colors.grey[200]!;
+  }
+
+  Future<void> skipfunction() async {
+    final prefs = await SharedPreferences.getInstance();
+    await FirebaseAuth.instance.signInAnonymously();
+    await prefs.setBool('onboarding_done', true);
+    Get.offAll(() => Homepage());
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       appBar: buildProgressAppBar(
         context,
         currentPage,
         totalPages,
-            () => Navigator.pop(context),  // Back button
-            () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => Homepage()),
-                (route) => false,
-          );
-        },  // Skip button
+            () => Navigator.pop(context),
+        skipfunction,
       ),
       body: SafeArea(
         child: Column(
           children: [
             SizedBox(height: 20),
-
-            // Title
             Text(
               "What's your gender?",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -100,7 +93,6 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
                 itemCount: genderOptions.length,
                 onPageChanged: (index) {
                   setState(() {
-                   // currentPage = index;
                     selectedGender = genderOptions[index]['gender'];
                   });
                 },
@@ -147,12 +139,15 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/UserTypeSelectionScreen');
-                  // TODO: Navigate to next screen in flow
+                  Get.to(() => UserTypeSelectionScreen());
                 },
                 child: Text(
                   "NEXT",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -161,7 +156,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
           ],
         ),
       ),
-      backgroundColor: Colors.white, // Screen background remains white
+      backgroundColor: Colors.grey[100],
     );
   }
 }

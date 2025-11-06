@@ -1,15 +1,31 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yogai/pages/HomePage.dart';
+import 'package:yogai/pages/UserDataCollectionPages/WeeklyGoalSelectionPage.dart';
 
 class ActivityLevelSelectionScreen extends StatefulWidget {
+  final String usertype;
+  final String selectedGoal;
+
+  const ActivityLevelSelectionScreen({
+    Key? key,
+    required this.usertype,
+    required this.selectedGoal,
+  }) : super(key: key);
+
   @override
   _ActivityLevelSelectionScreenState createState() => _ActivityLevelSelectionScreenState();
 }
 
 class _ActivityLevelSelectionScreenState extends State<ActivityLevelSelectionScreen> {
-  String selectedActivityLevel = "";  // No default
+  late String usertype;
+  late String selectedGoal;
+  String selectedActivityLevel = "";
   int currentPage = 3;
   int totalPages = 6;
+
   List<String> activityLevels = [
     "Sedentary",
     "Lightly Active",
@@ -17,25 +33,40 @@ class _ActivityLevelSelectionScreenState extends State<ActivityLevelSelectionScr
     "Very Active",
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    usertype = widget.usertype;
+    selectedGoal = widget.selectedGoal;
+  }
+
   void goToNextScreen() {
     if (selectedActivityLevel.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please select your activity level to proceed.")),
+        const SnackBar(content: Text("Please select your activity level to proceed.")),
       );
       return;
     }
 
-    print("Selected Activity Level: $selectedActivityLevel");
-    // TODO: Navigate to next screen (Weekly Goal Screen)
-    Navigator.pushNamed(context, '/WeeklyGoalSelectionPage');
+    print("User Type: $usertype");
+    print("Selected Goal: $selectedGoal");
+    print("Activity Level: $selectedActivityLevel");
+
+    Get.to(() => WeeklyGoalSelectionPage(
+      usertype: usertype,
+      selectedGoal: selectedGoal,
+      selectedActivityLevel: selectedActivityLevel,
+    ));
   }
 
-  AppBar buildProgressAppBar(BuildContext context, int currentPage, int totalPages, VoidCallback onBack, VoidCallback onSkip) {
+  AppBar buildProgressAppBar() {
     return AppBar(
-      leading: currentPage > 0 ? IconButton(
-        icon: Icon(Icons.arrow_back),
-        onPressed: onBack,
-      ) : SizedBox(width: 48), // Empty space on first page
+      leading: currentPage > 0
+          ? IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => Navigator.pop(context),
+      )
+          : const SizedBox(width: 48),
       title: LinearProgressIndicator(
         value: (currentPage + 1) / totalPages,
         backgroundColor: Colors.grey[300],
@@ -43,51 +74,45 @@ class _ActivityLevelSelectionScreenState extends State<ActivityLevelSelectionScr
       ),
       actions: [
         TextButton(
-          onPressed: onSkip,
-          child: Text("Skip", style: TextStyle(color: Colors.black)),
+          onPressed: skipfunction,
+          child: const Text("Skip", style: TextStyle(color: Colors.black)),
         ),
       ],
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       elevation: 0,
     );
   }
 
+  Future<void> skipfunction() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (FirebaseAuth.instance.currentUser == null) {
+      await FirebaseAuth.instance.signInAnonymously();
+    }
+    await prefs.setBool('onboarding_done', true);
+    Get.offAll(() => Homepage());
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar:buildProgressAppBar(
-      context,
-      currentPage,
-      totalPages,
-          () => Navigator.pop(context),  // Back button
-          () {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => Homepage()),
-              (route) => false,
-        );
-      },  // Skip button
-    ),
+      appBar: buildProgressAppBar(),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 "What is your activity level?",
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 10),
-              Text(
+              const SizedBox(height: 10),
+              const Text(
                 "Tell us how active you are in daily life",
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
-              SizedBox(height: 30),
-
-              // Activity Level Options
+              const SizedBox(height: 30),
               Expanded(
                 child: ListView.builder(
                   itemCount: activityLevels.length,
@@ -102,8 +127,8 @@ class _ActivityLevelSelectionScreenState extends State<ActivityLevelSelectionScr
                         });
                       },
                       child: Container(
-                        margin: EdgeInsets.symmetric(vertical: 10),
-                        padding: EdgeInsets.all(20),
+                        margin: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           color: isSelected ? Colors.blue : Colors.grey[200],
                           borderRadius: BorderRadius.circular(15),
@@ -121,24 +146,21 @@ class _ActivityLevelSelectionScreenState extends State<ActivityLevelSelectionScr
                   },
                 ),
               ),
-
-              // NEXT Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
-                  minimumSize: Size(double.infinity, 50),
+                  minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
                 onPressed: goToNextScreen,
-                child: Text(
+                child: const Text(
                   "NEXT",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
-
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
             ],
           ),
         ),

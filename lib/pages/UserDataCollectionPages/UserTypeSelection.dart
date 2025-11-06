@@ -1,8 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-
-import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yogai/pages/HomePage.dart';
+import 'package:yogai/pages/UserDataCollectionPages/MainGoalSelectionPage.dart';
 
 class UserTypeSelectionScreen extends StatefulWidget {
   @override
@@ -10,23 +11,41 @@ class UserTypeSelectionScreen extends StatefulWidget {
 }
 
 class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen> {
-  String selectedType = "General"; // Default selection
+  String selectedType = "General"; // Default
   int currentPage = 1;
   int totalPages = 6;
 
+  Future<void> skipfunction() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // If user is already logged in, skip re-signing
+    if (FirebaseAuth.instance.currentUser == null) {
+      await FirebaseAuth.instance.signInAnonymously();
+    }
+
+    await prefs.setBool('onboarding_done', true);
+    Get.offAll(() => Homepage());
+  }
 
   void goToNextScreen() {
     print("Selected User Type: $selectedType");
-    Navigator.pushNamed(context, '/MainGoalSelectionPage');
-    // TODO: Navigate to next data collection page (Focus Area Selection)
+    Get.to(() => MainGoalSelectionScreen(selectedType));
   }
 
-  AppBar buildProgressAppBar(BuildContext context, int currentPage, int totalPages, VoidCallback onBack, VoidCallback onSkip) {
+  AppBar buildProgressAppBar(
+      BuildContext context,
+      int currentPage,
+      int totalPages,
+      VoidCallback onBack,
+      VoidCallback onSkip,
+      ) {
     return AppBar(
-      leading: currentPage > 0 ? IconButton(
+      leading: currentPage > 0
+          ? IconButton(
         icon: Icon(Icons.arrow_back),
         onPressed: onBack,
-      ) : SizedBox(width: 48), // Empty space on first page
+      )
+          : SizedBox(width: 48),
       title: LinearProgressIndicator(
         value: (currentPage + 1) / totalPages,
         backgroundColor: Colors.grey[300],
@@ -38,7 +57,7 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen> {
           child: Text("Skip", style: TextStyle(color: Colors.black)),
         ),
       ],
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       elevation: 0,
     );
   }
@@ -51,14 +70,8 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen> {
         context,
         currentPage,
         totalPages,
-            () => Navigator.pop(context),  // Back button
-            () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => Homepage()),
-                (route) => false,
-          );
-        },  // Skip button
+            () => Navigator.pop(context),
+        skipfunction,
       ),
       body: SafeArea(
         child: Padding(
@@ -78,68 +91,20 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen> {
               SizedBox(height: 40),
 
               // Option Cards
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedType = "General";
-                  });
-                },
-                child: Container(
-                  padding: EdgeInsets.all(20),
-                  margin: EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: selectedType == "General" ? Colors.blue : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.person, size: 40, color: selectedType == "General" ? Colors.white : Colors.black),
-                      SizedBox(width: 20),
-                      Text(
-                        "General User",
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: selectedType == "General" ? Colors.white : Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              _buildOptionCard(
+                label: "General User",
+                icon: Icons.person,
+                type: "General",
               ),
-
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedType = "Disabled";
-                  });
-                },
-                child: Container(
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: selectedType == "Disabled" ? Colors.blue : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.accessible, size: 40, color: selectedType == "Disabled" ? Colors.white : Colors.black),
-                      SizedBox(width: 20),
-                      Text(
-                        "Disabled User",
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: selectedType == "Disabled" ? Colors.white : Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              SizedBox(height: 20),
+              _buildOptionCard(
+                label: "Disabled User",
+                icon: Icons.accessible,
+                type: "Disabled",
               ),
 
               Spacer(),
 
-              // NEXT Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
@@ -151,11 +116,48 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen> {
                 onPressed: goToNextScreen,
                 child: Text(
                   "NEXT",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionCard({
+    required String label,
+    required IconData icon,
+    required String type,
+  }) {
+    final isSelected = selectedType == type;
+    return GestureDetector(
+      onTap: () {
+        setState(() => selectedType = type);
+      },
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue : Colors.grey[200],
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 40, color: isSelected ? Colors.white : Colors.black),
+            SizedBox(width: 20),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 20,
+                color: isSelected ? Colors.white : Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
     );

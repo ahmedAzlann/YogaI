@@ -1,37 +1,78 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yogai/pages/HomePage.dart';
+import 'package:yogai/pages/UserDataCollectionPages/PhysicalStatsInputScreen.dart';
 
 class WeeklyGoalSelectionPage extends StatefulWidget {
+  final String usertype;
+  final String selectedGoal;
+  final String selectedActivityLevel;
 
-
+  const WeeklyGoalSelectionPage({
+    Key? key,
+    required this.selectedActivityLevel,
+    required this.usertype,
+    required this.selectedGoal,
+  }) : super(key: key);
 
   @override
   _WeeklyGoalSelectionPageState createState() => _WeeklyGoalSelectionPageState();
 }
 
 class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
-  late int currentPage = 4;
-  int totalPages = 6;
+  late String usertype;
+  late String selectedGoal;
+  late String selectedActivityLevel;
 
-  int selectedSessions = 3;  // Default selection
+  int currentPage = 4;
+  int totalPages = 6;
+  int selectedSessions = 3;
   String selectedFirstDay = "SUNDAY";
 
   List<String> weekDays = [
     "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    usertype = widget.usertype;
+    selectedGoal = widget.selectedGoal;
+    selectedActivityLevel = widget.selectedActivityLevel;
+  }
+
   void goToNextScreen() {
     print("Weekly Goal: $selectedSessions, First day: $selectedFirstDay");
-    Navigator.pushNamed(context, '/PhysicalStatsInputScreen');
-    // TODO: Navigate to next screen (Physical Stats Input Screen)
+
+    // Use only Get.to() (no Navigator here)
+    Get.to(() => PhysicalStatsInputScreen(
+      usertype: usertype,
+      selectedGoal: selectedGoal,
+      selectedActivityLevel: selectedActivityLevel,
+      selectedSessions: selectedSessions,
+      selectedFirstDay: selectedFirstDay,
+    ));
+  }
+
+  Future<void> skipfunction() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (FirebaseAuth.instance.currentUser == null) {
+      await FirebaseAuth.instance.signInAnonymously();
+    }
+    await prefs.setBool('onboarding_done', true);
+    Get.offAll(() => Homepage());
   }
 
   AppBar buildProgressAppBar(BuildContext context, int currentPage, int totalPages, VoidCallback onBack, VoidCallback onSkip) {
     return AppBar(
-      leading: currentPage > 0 ? IconButton(
+      leading: currentPage > 0
+          ? IconButton(
         icon: Icon(Icons.arrow_back),
         onPressed: onBack,
-      ) : SizedBox(width: 48), // Empty space on first page
+      )
+          : SizedBox(width: 48),
       title: LinearProgressIndicator(
         value: (currentPage + 1) / totalPages,
         backgroundColor: Colors.grey[300],
@@ -43,18 +84,9 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
           child: Text("Skip", style: TextStyle(color: Colors.black)),
         ),
       ],
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       elevation: 0,
     );
-  }
-
-  void skipDataCollection() {
-    print("Skip pressed → Go to Home Screen");
-    // TODO: Navigate directly to Home Screen
-  }
-
-  void goBack() {
-    Navigator.pop(context);
   }
 
   @override
@@ -65,30 +97,18 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
         context,
         currentPage,
         totalPages,
-            () => Navigator.pop(context),  // Back button
-            () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => Homepage()),
-                (route) => false,
-          );
-        },  // Skip button
+            () => Get.back(), // consistent GetX back navigation
+        skipfunction,
       ),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Set your weekly goal",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
+              Text("Set your weekly goal", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
               SizedBox(height: 10),
-              Text(
-                "We recommend at least 3 days for a better result.",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
+              Text("We recommend at least 3 days for a better result.", style: TextStyle(fontSize: 16, color: Colors.grey)),
               SizedBox(height: 30),
 
               // Weekly Goal Buttons
@@ -99,11 +119,7 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
                   int dayCount = index + 1;
                   bool isSelected = selectedSessions == dayCount;
                   return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedSessions = dayCount;
-                      });
-                    },
+                    onTap: () => setState(() => selectedSessions = dayCount),
                     child: Container(
                       width: 60,
                       height: 60,
@@ -127,13 +143,10 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
 
               SizedBox(height: 40),
 
-              Text(
-                "First day of the week",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
+              Text("First day of the week", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               SizedBox(height: 10),
 
-              // Dropdown for first day
+              // Dropdown
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 15),
                 decoration: BoxDecoration(
@@ -150,11 +163,7 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
                       child: Text(day, style: TextStyle(fontSize: 18)),
                     );
                   }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedFirstDay = value!;
-                    });
-                  },
+                  onChanged: (value) => setState(() => selectedFirstDay = value!),
                 ),
               ),
 
@@ -165,15 +174,10 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   minimumSize: Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                 ),
                 onPressed: goToNextScreen,
-                child: Text(
-                  "NEXT",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white),
-                ),
+                child: Text("NEXT", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
 
               SizedBox(height: 30),
