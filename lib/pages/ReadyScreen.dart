@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
@@ -6,6 +7,7 @@ import '../models/PoseModel.dart';
 import 'YogaPlayerScreen.dart';
 
 class ReadyScreen extends StatefulWidget {
+
   final List<PoseModel> poses;
   final int index; // current pose index
   final String userId; // optional for progress saving
@@ -23,6 +25,7 @@ class ReadyScreen extends StatefulWidget {
 }
 
 class _ReadyScreenState extends State<ReadyScreen> {
+  late final AudioPlayer player;
   late int secondsLeft;
   Timer? _timer;
   final FlutterTts _tts = FlutterTts();
@@ -31,9 +34,12 @@ class _ReadyScreenState extends State<ReadyScreen> {
   void initState() {
     super.initState();
     secondsLeft = 30;
+    player = AudioPlayer();
     _speak("Get ready for ${widget.poses[widget.index].name}");
     _startTimer();
   }
+
+
 
   Future<void> _speak(String text) async {
     await _tts.setLanguage("en-US");
@@ -63,24 +69,61 @@ class _ReadyScreenState extends State<ReadyScreen> {
     //_speak("Added $s seconds");
   }
 
-  void _skip() {
+
+  void _skip() async {
     _timer?.cancel();
+
+    try {
+      final player = AudioPlayer();
+      await player.play(AssetSource('whistle.mp3'));
+    } catch (e) {
+      debugPrint("Sound play error: $e");
+    }
+
+    // delay slightly to let the sound be heard
+    await Future.delayed(const Duration(milliseconds: 600));
+
     _goToYoga();
   }
 
+
+
   void _goToYoga() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => YogaPlayerScreen(
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 700),
+        pageBuilder: (context, animation, secondaryAnimation) => YogaPlayerScreen(
           title: widget.title,
           poses: widget.poses,
           index: widget.index,
           userId: widget.userId,
         ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final offsetAnimation = Tween<Offset>(
+            begin: const Offset(0.2, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          ));
+
+          final fadeAnimation = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeInOut,
+          );
+
+          return SlideTransition(
+            position: offsetAnimation,
+            child: FadeTransition(
+              opacity: fadeAnimation,
+              child: child,
+            ),
+          );
+        },
       ),
     );
   }
+
 
   @override
   void dispose() {

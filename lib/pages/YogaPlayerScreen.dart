@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:video_player/video_player.dart';
@@ -26,6 +27,7 @@ class YogaPlayerScreen extends StatefulWidget {
 
 class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
   bool _isPaused = false;
+  late final player;
   late int currentIndex;
   final FlutterTts _tts = FlutterTts();
   late int secondsLeft;
@@ -37,6 +39,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     super.initState();
     currentIndex = widget.index;
     secondsLeft = 30;
+    player = AudioCache();
     //_initVideo();
     _startTimer();
      }
@@ -122,6 +125,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
 
   void _onSkip() async {
     await _markProgress('skipped');
+    // player.play('assets/whistle.mp3 ');
     _goNext();
   }
 
@@ -155,18 +159,66 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     });
   }
 
-  void _goNext() {
+
+  void _goNext() async {
+    await _markProgress('completed');
+
     if (currentIndex + 1 < widget.poses.length) {
       setState(() => currentIndex++);
-      _initVideo();
-      Navigator.pushReplacement(context, MaterialPageRoute(
-        builder: (_) => ReadyScreen(poses: widget.poses, index: currentIndex, userId: widget.userId,title: widget.title),
-      ));
+
+      // optional: play whistle or transition sound here
+      try {
+        final player = AudioPlayer();
+        await player.play(AssetSource('whistle.mp3'));
+      } catch (e) {
+        debugPrint("Sound play error: $e");
+      }
+
+      // delay slightly for the sound to register
+      await Future.delayed(const Duration(milliseconds: 400));
+
+      // smooth animated transition to ReadyScreen
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 700),
+          pageBuilder: (context, animation, secondaryAnimation) => ReadyScreen(
+            poses: widget.poses,
+            index: currentIndex,
+            userId: widget.userId,
+            title: widget.title,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final offsetAnimation = Tween<Offset>(
+              begin: const Offset(0.2, 0),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            ));
+
+            final fadeAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeInOut,
+            );
+
+            return SlideTransition(
+              position: offsetAnimation,
+              child: FadeTransition(
+                opacity: fadeAnimation,
+                child: child,
+              ),
+            );
+          },
+        ),
+      );
     } else {
-      // session finished
       _finishSession();
     }
   }
+
+
+
+
   void _pauseTimer() {
     setState(() {
       _isPaused = true;
@@ -178,15 +230,50 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       _isPaused = false;
     });
   }
+
+
   void _goPrevious() {
     if (currentIndex > 0) {
       setState(() => currentIndex--);
-      _initVideo();
-      Navigator.pushReplacement(context, MaterialPageRoute(
-        builder: (_) => ReadyScreen(poses: widget.poses, index: currentIndex, userId: widget.userId,title: widget.title),
-      ));
+
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 700),
+          pageBuilder: (context, animation, secondaryAnimation) => ReadyScreen(
+            poses: widget.poses,
+            index: currentIndex,
+            userId: widget.userId,
+            title: widget.title,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final offsetAnimation = Tween<Offset>(
+              begin: const Offset(-0.2, 0), // slide from left when going back
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            ));
+
+            final fadeAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeInOut,
+            );
+
+            return SlideTransition(
+              position: offsetAnimation,
+              child: FadeTransition(
+                opacity: fadeAnimation,
+                child: child,
+              ),
+            );
+          },
+        ),
+      );
     }
   }
+
+
+
   Widget _quitOption(BuildContext context, String text) {
     return InkWell(
       onTap: () => Navigator.pop(context, true),

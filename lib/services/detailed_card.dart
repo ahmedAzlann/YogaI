@@ -152,6 +152,12 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
                     height: 220,
                     width: double.infinity,
                     fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                    ),
                   ),
                 ),
                 Container(
