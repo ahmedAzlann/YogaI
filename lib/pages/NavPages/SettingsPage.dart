@@ -1,7 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:get/get.dart';
 
-class SettingsPage extends StatelessWidget {
+import '../../services/settings_manager.dart';
+import '../../settingspage/GeneralSettingsPage.dart';
+import '../../settingspage/LanguageOptionsPage.dart';
+import '../../settingspage/WorkoutSettingsPage.dart';
+
+class SettingsPage extends StatefulWidget {
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+late int restTimer ;
+ late int prepTimer ;
+  bool voiceGuide = true;
+  bool coachTips = true;
+  bool soundEffect = true;
+
+
   void _showBackupRestoreSheet(BuildContext context) {
     showModalBottomSheet(
       backgroundColor: Colors.white,
@@ -51,10 +70,33 @@ class SettingsPage extends StatelessWidget {
     }
   }
 
+void openWorkoutSettings() async {
+  int rest = await SettingsManager.getRestTimer();
+  int prep = await SettingsManager.getPrepTimer();
+
+  Get.to(() => WorkoutSettingsPage(
+    restTimer: rest,
+    prepTimer: prep,
+    voiceGuide: voiceGuide,
+    coachTips: coachTips,
+    soundEffect: soundEffect,
+    onSave: (rest, prep, voice, coach, sound) {
+      setState(() {
+        restTimer = rest;
+        prepTimer = prep;
+        voiceGuide = voice;
+        coachTips = coach;
+        soundEffect = sound;
+      });
+    },
+  ));
+}
+
+
   void _sendFeedback() async {
     final Uri emailUri = Uri(
       scheme: 'mailto',
-      path: 'support@yogaapp.com',
+      path: 'spitprojectyoga@gmail.com',
       query: 'subject=Yoga App Feedback',
     );
     if (await canLaunch(emailUri.toString())) {
@@ -67,7 +109,13 @@ class SettingsPage extends StatelessWidget {
     // Use share_plus package in a real implementation
   }
 
-  @override
+@override
+void initState() {
+  super.initState();
+
+}
+
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -86,9 +134,7 @@ class SettingsPage extends StatelessWidget {
             leading: Icon(Icons.fitness_center, color: Colors.green),
             title: Text("Workout Settings"),
             subtitle: Text("Gender, Rest Counter, Countdown, Sound Options"),
-            onTap: () {
-              print("Open Workout Settings");
-            },
+            onTap: openWorkoutSettings,
           ),
           Divider(),
 
@@ -97,7 +143,7 @@ class SettingsPage extends StatelessWidget {
             title: Text("General Settings"),
             subtitle: Text("Reminder, Keep Screen On, Privacy Policy"),
             onTap: () {
-              print("Open General Settings");
+              Get.to(() => GeneralSettingsPage());
             },
           ),
           Divider(),
@@ -106,9 +152,7 @@ class SettingsPage extends StatelessWidget {
             leading: Icon(Icons.language, color: Colors.purple),
             title: Text("Language Options"),
             subtitle: Text("English, French, Arabic, etc."),
-            onTap: () {
-              print("Open Language Options");
-            },
+            onTap: () => Get.to(() => LanguageOptionsPage()),
           ),
           Divider(),
 
@@ -136,3 +180,8 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
+
+
+
+
+

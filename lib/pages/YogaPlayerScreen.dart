@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../models/PoseDetailSheet.dart';
 import '../models/PoseModel.dart';
+import '../services/settings_manager.dart';
 import 'ReadyScreen.dart';
 
 class YogaPlayerScreen extends StatefulWidget {
@@ -31,26 +32,49 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
   late int currentIndex;
   final FlutterTts _tts = FlutterTts();
   late int secondsLeft;
+  late int middle;
+  late int og;
+  late int announce;
   Timer? _timer;
   VideoPlayerController? _videoController;
+  late bool voiceGuide;
+  late bool coachTips;
+
+
 
   @override
   void initState() {
     super.initState();
     currentIndex = widget.index;
-    secondsLeft = 30;
     player = AudioCache();
-    //_initVideo();
-    _startTimer();
+    _loadSettings();
+
+
      }
 
-  Future<void> _speak(String text) async {
-    await _tts.setLanguage("en-US");
-    await _tts.setSpeechRate(0.5);
+  void _loadSettings() async {
+    secondsLeft = await SettingsManager.getRestTimer();
+    voiceGuide = await SettingsManager.getVoiceGuide();
+    coachTips = await SettingsManager.getCoachTips();
 
-    // await _tts.setPitch(1.0);
+    og = secondsLeft;
+    middle = secondsLeft ~/ 2;      // correct
+    announce = secondsLeft - 2;
+
+    setState(() {});
+    _startTimer();
+  }
+
+
+
+
+  Future<void> _speak(String text) async {
+    String lang = await SettingsManager.getLanguage();
+    await _tts.setLanguage(lang);
+    await _tts.setSpeechRate(0.5);
     await _tts.speak(text);
   }
+
 
   void _initVideo() {
     final videoUrl = widget.poses[currentIndex].videoUrl;
@@ -130,6 +154,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
   }
 
 
+
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) async {
@@ -138,16 +163,22 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
           secondsLeft--;
         });
 
-        if (secondsLeft == 29) {
-          _speak("Start 30 seconds ${widget.poses[widget.index].name}");
-
+        // ✅ Start announcement
+        if (secondsLeft == announce) {
+          if (voiceGuide) {
+            _speak("Start $og seconds ${widget.poses[currentIndex].name}");
           }
-
-        if(secondsLeft == 15){
-         _speak("This exercise ${widget.poses[currentIndex].benefits}");
         }
-        // Speak countdown for last 3 seconds
-        if (secondsLeft == 3 || secondsLeft == 2 || secondsLeft == 1) {
+
+        // ✅ Coach tips halfway
+        if (secondsLeft == middle) {
+          if (coachTips) {
+            _speak("This exercise ${widget.poses[currentIndex].benefits}");
+          }
+        }
+
+        // ✅ Last 3 seconds countdown only if voiceGuide enabled
+        if (voiceGuide && (secondsLeft == 3 || secondsLeft == 2 || secondsLeft == 1)) {
           await _speak("$secondsLeft");
         }
       }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../models/PoseModel.dart';
+import '../services/settings_manager.dart';
 import 'YogaPlayerScreen.dart';
 
 class ReadyScreen extends StatefulWidget {
@@ -33,21 +34,26 @@ class _ReadyScreenState extends State<ReadyScreen> {
   @override
   void initState() {
     super.initState();
-    secondsLeft = 30;
+    _loadSettings();
     player = AudioPlayer();
     _speak("Get ready for ${widget.poses[widget.index].name}");
+
+  }
+
+  void _loadSettings() async {
+    secondsLeft = await SettingsManager.getPrepTimer();
+    setState(() {});
     _startTimer();
   }
 
-
-
   Future<void> _speak(String text) async {
-    await _tts.setLanguage("en-US");
+    String lang = await SettingsManager.getLanguage();
+    await _tts.setLanguage(lang);
     await _tts.setSpeechRate(0.5);
-
-    // await _tts.setPitch(1.0);
     await _tts.speak(text);
   }
+
+
 
   void _startTimer() {
     _timer?.cancel();

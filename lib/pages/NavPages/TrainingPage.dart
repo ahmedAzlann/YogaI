@@ -111,7 +111,7 @@ class _TrainingpageState extends State<Trainingpage> {
                   child: Column(
                     children: [
                       // search bar
-                      TextField(
+                   /*   TextField(
                           decoration: InputDecoration(
                             prefixIcon: Icon(Icons.search),
                             hintText: "Find your flow today",
@@ -122,7 +122,7 @@ class _TrainingpageState extends State<Trainingpage> {
                             fillColor: Colors.grey[200],
                           )
                       ),
-                      SizedBox(height: 20,),
+                      SizedBox(height: 20,),   */
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

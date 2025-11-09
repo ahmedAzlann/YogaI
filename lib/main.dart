@@ -14,11 +14,14 @@ import 'package:yogai/pages/UserDataCollectionPages/UserTypeSelection.dart';
 import 'package:yogai/pages/UserDataCollectionPages/MainGoalSelectionPage.dart';
 import 'package:yogai/pages/UserDataCollectionPages/ActivityLevelSelectionPage.dart';
 import 'package:yogai/pages/UserDataCollectionPages/WeeklyGoalSelectionPage.dart';
+import 'package:yogai/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
+
+  await NotificationService.init();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
