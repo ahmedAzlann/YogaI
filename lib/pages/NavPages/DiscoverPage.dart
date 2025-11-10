@@ -1,7 +1,11 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 import '../../models/No_Internet_Screen.dart';
 import '../../models/network_checker.dart';
 import '../../services/detailed_card.dart';
@@ -54,39 +58,39 @@ class _DiscoverpageState extends State<Discoverpage> {
   ];
 
   final List<Map<String, dynamic>> _learnTips = [
-    {"text": "Yoga is not about touching your toes, it’s about what you learn on the way down.", "color": Colors.teal},
-    {"text": "Breathe deeper — your body listens to every inhale and exhale.", "color": Colors.orangeAccent},
-    {"text": "Progress in yoga isn’t flexibility, it’s awareness.", "color": Colors.blueAccent},
-    {"text": "Balance isn’t something you find. It’s something you build pose by pose.", "color": Colors.purpleAccent},
-    {"text": "When you can’t control what’s happening, control how you breathe.", "color": Colors.green},
-    {"text": "Rest days are part of the practice. The mat will wait.", "color": Colors.indigoAccent},
-    {"text": "You are only as young as your spine is flexible.", "color": Colors.deepOrange},
-    {"text": "Meditation is not escaping the world, it’s meeting it clearly.", "color": Colors.pinkAccent},
-    {"text": "Stretching the body stretches the mind.", "color": Colors.cyan},
-    {"text": "Each pose teaches patience more than posture.", "color": Colors.lime},
-    {"text": "Strength is calm under tension.", "color": Colors.deepPurple},
-    {"text": "Your breath is your superpower. Use it when life gets loud.", "color": Colors.amber},
-    {"text": "Savasana is not sleep. It’s the art of conscious rest.", "color": Colors.lightBlue},
-    {"text": "You don’t need perfect alignment — you need honest effort.", "color": Colors.pink},
-    {"text": "Your mat is a mirror. What shows up there, shows up everywhere.", "color": Colors.deepOrangeAccent},
-    {"text": "Silence isn’t empty. It’s full of answers.", "color": Colors.tealAccent},
-    {"text": "A strong body supports a soft heart.", "color": Colors.blueGrey},
-    {"text": "Yoga doesn’t change who you are. It removes who you are not.", "color": Colors.lightGreen},
-    {"text": "You can’t always calm the storm, but you can calm yourself.", "color": Colors.purple},
-    {"text": "The pose begins when you want to leave it.", "color": Colors.redAccent},
-    {"text": "Stillness speaks louder than any movement.", "color": Colors.cyanAccent},
-    {"text": "Discipline is remembering what you want most.", "color": Colors.orange},
-    {"text": "Flexibility follows consistency, not talent.", "color": Colors.indigo},
-    {"text": "Your body hears everything your mind says. Be kind in both places.", "color": Colors.amberAccent},
-    {"text": "Every exhale is a tiny surrender. Let go more often.", "color": Colors.deepPurpleAccent},
-    {"text": "Stillness isn’t laziness — it’s your system rebooting.", "color": Colors.lightBlueAccent},
-    {"text": "Don’t rush your flexibility; even steel softens with patience.", "color": Colors.orangeAccent},
-    {"text": "When you hold a pose, notice what’s holding you back — it’s rarely your muscles.", "color": Colors.greenAccent},
-    {"text": "The mat doesn’t care about your outfit, only your effort.", "color": Colors.cyanAccent},
-    {"text": "Yoga doesn’t fix life. It makes you unbothered enough to live it.", "color": Colors.indigoAccent},
-    {"text": "Inhale discipline, exhale doubt.", "color": Colors.pinkAccent},
-    {"text": "Your best pose might be the one where you finally stop comparing.", "color": Colors.tealAccent},
-    {"text": "Don’t fight for balance — let it find you when you’re steady enough to notice.", "color": Colors.deepPurpleAccent},
+    {"text": "Yoga is not about touching your toes, it’s about what you learn on the way down.", "color": Colors.white},
+    {"text": "Breathe deeper — your body listens to every inhale and exhale.", "color": Colors.white},
+    {"text": "Progress in yoga isn’t flexibility, it’s awareness.", "color": Colors.white},
+    {"text": "Balance isn’t something you find. It’s something you build pose by pose.", "color": Colors.white},
+    {"text": "When you can’t control what’s happening, control how you breathe.", "color": Colors.white},
+    {"text": "Rest days are part of the practice. The mat will wait.", "color": Colors.white},
+    {"text": "You are only as young as your spine is flexible.", "color": Colors.white},
+    {"text": "Meditation is not escaping the world, it’s meeting it clearly.", "color": Colors.white},
+    {"text": "Stretching the body stretches the mind.", "color": Colors.white},
+    {"text": "Each pose teaches patience more than posture.", "color": Colors.white},
+    {"text": "Strength is calm under tension.", "color": Colors.white},
+    {"text": "Your breath is your superpower. Use it when life gets loud.", "color": Colors.white},
+    {"text": "Savasana is not sleep. It’s the art of conscious rest.", "color": Colors.white},
+    {"text": "You don’t need perfect alignment — you need honest effort.", "color": Colors.white},
+    {"text": "Your mat is a mirror. What shows up there, shows up everywhere.", "color": Colors.white},
+    {"text": "Silence isn’t empty. It’s full of answers.", "color": Colors.white},
+    {"text": "A strong body supports a soft heart.", "color": Colors.white},
+    {"text": "Yoga doesn’t change who you are. It removes who you are not.", "color": Colors.white},
+    {"text": "You can’t always calm the storm, but you can calm yourself.", "color": Colors.white},
+    {"text": "The pose begins when you want to leave it.", "color": Colors.white},
+    {"text": "Stillness speaks louder than any movement.", "color": Colors.white},
+    {"text": "Discipline is remembering what you want most.", "color": Colors.white},
+    {"text": "Flexibility follows consistency, not talent.", "color": Colors.white},
+    {"text": "Your body hears everything your mind says. Be kind in both places.", "color": Colors.white},
+    {"text": "Every exhale is a tiny surrender. Let go more often.", "color": Colors.white},
+    {"text": "Stillness isn’t laziness — it’s your system rebooting.", "color": Colors.white},
+    {"text": "Don’t rush your flexibility; even steel softens with patience.", "color": Colors.white},
+    {"text": "When you hold a pose, notice what’s holding you back — it’s rarely your muscles.", "color": Colors.white},
+    {"text": "The mat doesn’t care about your outfit, only your effort.", "color": Colors.white},
+    {"text": "Yoga doesn’t fix life. It makes you unbothered enough to live it.", "color": Colors.white},
+    {"text": "Inhale discipline, exhale doubt.", "color": Colors.white},
+    {"text": "Your best pose might be the one where you finally stop comparing.", "color": Colors.white},
+    {"text": "Don’t fight for balance — let it find you when you’re steady enough to notice.", "color": Colors.white},
 
 
 
@@ -190,7 +194,7 @@ class _DiscoverpageState extends State<Discoverpage> {
             text,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.white,
+              color: Colors.black,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               height: 1.5,
@@ -217,6 +221,7 @@ class _DiscoverpageState extends State<Discoverpage> {
 
     return _hasInternet?
      SingleChildScrollView(
+       physics: BouncingScrollPhysics(),
       scrollDirection: Axis.vertical,
       child: SafeArea(
         child: Padding(
@@ -363,6 +368,7 @@ class _DiscoverpageState extends State<Discoverpage> {
               const SizedBox(height: 12),
 
               Card(
+                color: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                 elevation: 6,
                 shadowColor: Colors.blueAccent.withOpacity(0.4),
@@ -375,7 +381,7 @@ class _DiscoverpageState extends State<Discoverpage> {
                         topRight: Radius.circular(18),
                       ),
                       child: Image.asset(
-                        'images/resistance_band.png', // your thumbnail or preview image
+                        'images/resis.png', // your thumbnail or preview image
                         fit: BoxFit.cover,
                         width: double.infinity,
                         height: 180,
@@ -384,6 +390,7 @@ class _DiscoverpageState extends State<Discoverpage> {
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
+
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
@@ -416,11 +423,10 @@ class _DiscoverpageState extends State<Discoverpage> {
                               style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                             ),
                             onPressed: () {
-                              // TODO: Navigate to video page or launch player
-                              // Example:
-                              // Navigator.push(context, MaterialPageRoute(builder: (context) => VideoPlayerScreen(videoUrl: "https://example.com/resistance_band.mp4")));
+                              Get.to(() => VideoPlayerScreen(videoUrl: "https://res.cloudinary.com/dztwlrj7b/video/upload/v1762075229/how_to_use_resistant_band_v4e4rs.ts"));
                             },
                           ),
+
                         ],
                       ),
                     ),
@@ -440,4 +446,53 @@ class _DiscoverpageState extends State<Discoverpage> {
   }
 }
 
+class VideoPlayerScreen extends StatefulWidget {
+  final String videoUrl;
+
+  const VideoPlayerScreen({super.key, required this.videoUrl});
+
+  @override
+  State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+  late VideoPlayerController _controller;
+  ChewieController? _chewieController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = VideoPlayerController.network(widget.videoUrl)
+      ..initialize().then((_) {
+        setState(() {});
+      });
+
+    _chewieController = ChewieController(
+      videoPlayerController: _controller,
+      autoPlay: true,
+      looping: false,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _chewieController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Watch Video"),
+        backgroundColor: Colors.blueAccent,
+      ),
+      body: _controller.value.isInitialized
+          ? Chewie(controller: _chewieController!)
+          : const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
 

@@ -186,11 +186,25 @@ class _ReadyScreenState extends State<ReadyScreen> {
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
+
+                              // NEW: pose index indicator
+                              Text(
+                                "${widget.index + 1} / ${widget.poses.length}",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+
                               const Text(
                                 "READY TO GO!",
                                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+
                               ),
                               const SizedBox(height: 8),
+
                               Flexible(
                                 child: Text(
                                   pose.name,
@@ -207,14 +221,12 @@ class _ReadyScreenState extends State<ReadyScreen> {
 
                               const SizedBox(height: 20),
 
-                              // Timer
                               Text(
-                                "00:$secondsLeft",
+                                secondsLeft >= 10 ? "00:$secondsLeft" : "00:0$secondsLeft",
                                 style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white),
                               ),
                               const SizedBox(height: 30),
 
-                              // Bottom controls
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -232,7 +244,6 @@ class _ReadyScreenState extends State<ReadyScreen> {
                                   ),
                                   const SizedBox(width: 12),
                                   ElevatedButton(
-
                                     onPressed: _skip,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.white,
@@ -248,6 +259,7 @@ class _ReadyScreenState extends State<ReadyScreen> {
                               ),
                             ],
                           ),
+
                         ),
                       )
 

@@ -14,6 +14,9 @@ import '../../models/No_Internet_Screen.dart';
 import '../../models/network_checker.dart';
 import '../../services/detailed_card.dart';
 import '../../services/notification_service.dart';
+import '../../widgets/BmiCard.dart';
+import '../../widgets/StreakCard.dart';
+import '../../widgets/WeightCard.dart';
 
 
 class Reportpage extends StatefulWidget {
@@ -121,157 +124,180 @@ class _ReportpageState extends State<Reportpage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
-          "Your Yoga Progress",
-          style: TextStyle(fontWeight: FontWeight.w700),
+          " Progress",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
         ),
-        centerTitle: true,
         backgroundColor: Colors.grey[100],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: titlesRef.snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text(
-                "No progress yet. Start a session!",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+              // Your cards
+              StreakCard(),
+              SizedBox(height: 16),
+
+              WeightCard(),
+              SizedBox(height: 16),
+
+              BmiCard(),
+              SizedBox(height: 16),
+
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text("History",style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),),
               ),
-            );
-          }
 
-          final titles = snapshot.data!.docs;
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: titles.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, i) {
-              final doc = titles[i];
-              final data = doc.data() as Map<String, dynamic>;
-              final title = data['title'] ?? 'Untitled';
-              final percent = data['completionPercent'] ?? 0;
-              final lastUpdatedRaw = data['lastUpdated'] ?? '';
-              final completedCount =
-                  (data['completedPoses'] as List?)?.length ?? 0;
-              final imagePath = 'images/default_yoga.png'; // fallback image if missing
-
-              // Parse and format date
-              String formattedDate = 'Unknown';
-              if (lastUpdatedRaw is String &&
-                  lastUpdatedRaw.isNotEmpty) {
-                try {
-                  final parsedDate = DateTime.parse(lastUpdatedRaw);
-
-                  String getDaySuffix(int day) {
-                    if (day >= 11 && day <= 13) return 'th';
-                    switch (day % 10) {
-                      case 1:
-                        return 'st';
-                      case 2:
-                        return 'nd';
-                      case 3:
-                        return 'rd';
-                      default:
-                        return 'th';
-                    }
+              // Your list of progress
+              StreamBuilder<QuerySnapshot>(
+                stream: titlesRef.snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
                   }
 
-                  final day = parsedDate.day;
-                  final suffix = getDaySuffix(day);
-                  formattedDate =
-                  "$day$suffix ${DateFormat('MMM yyyy').format(parsedDate)}";
-                } catch (e) {
-                  formattedDate = 'Invalid date';
-                }
-              }
-
-              // 🧩 Dismissible wrapper with tap navigation
-              return AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Dismissible(
-                  key: Key(doc.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
-                    color: Colors.redAccent,
-                    child: const Icon(Icons.delete,
-                        color: Colors.white, size: 28),
-                  ),
-                  confirmDismiss: (direction) async {
-                    return await _showDeleteDialog(context, doc.id);
-                  },
-                  child: Card(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 3,
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 16),
-
-                      title: Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Text(
+                          "No progress yet. Start a session!",
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                       ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          LinearProgressIndicator(
-                            value: percent / 100,
-                            minHeight: 6,
-                            borderRadius: BorderRadius.circular(4),
-                            backgroundColor: Colors.grey[300],
-                            color: Colors.blueAccent,
+                    );
+                  }
+
+                  final titles = snapshot.data!.docs;
+
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),  // important
+                    itemCount: titles.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, i) {
+                      final doc = titles[i];
+                      final data = doc.data() as Map<String, dynamic>;
+                      final title = data['title'] ?? 'Untitled';
+                      final percent = data['completionPercent'] ?? 0;
+                      final lastUpdatedRaw = data['lastUpdated'] ?? '';
+                      final completedCount =
+                          (data['completedPoses'] as List?)?.length ?? 0;
+
+                      String formattedDate = 'Unknown';
+                      if (lastUpdatedRaw is String && lastUpdatedRaw.isNotEmpty) {
+                        try {
+                          final parsedDate = DateTime.parse(lastUpdatedRaw);
+
+                          String getSuffix(int day) {
+                            if (day >= 11 && day <= 13) return 'th';
+                            switch (day % 10) {
+                              case 1: return 'st';
+                              case 2: return 'nd';
+                              case 3: return 'rd';
+                              default: return 'th';
+                            }
+                          }
+
+                          final day = parsedDate.day;
+                          final suffix = getSuffix(day);
+                          formattedDate =
+                          "$day$suffix ${DateFormat('MMM yyyy').format(parsedDate)}";
+                        } catch (_) {}
+                      }
+
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: Dismissible(
+                          key: Key(doc.id),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 20),
+                            color: Colors.redAccent,
+                            child: const Icon(Icons.delete,
+                                color: Colors.white, size: 28),
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            "$percent% completed • $completedCount poses done",
-                            style:
-                            const TextStyle(color: Colors.black54),
-                          ),
-                          Text(
-                            "Last updated: $formattedDate",
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                      trailing: const Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 18,
-                        color: Colors.grey,
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => YogaPoseDetailScreen(
-                              title: title,
-                              image: imagePath,
+                          confirmDismiss: (_) async {
+                            return await _showDeleteDialog(context, doc.id);
+                          },
+                          child: Card(
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 3,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 16),
+                              title: Text(
+                                title,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4),
+                                  LinearProgressIndicator(
+                                    value: percent / 100,
+                                    minHeight: 6,
+                                    borderRadius: BorderRadius.circular(4),
+                                    backgroundColor: Colors.grey[300],
+                                    color: Colors.blueAccent,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    "$percent% • $completedCount poses done",
+                                    style: TextStyle(color: Colors.black54),
+                                  ),
+                                  Text(
+                                    "Last updated: $formattedDate",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              trailing: Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 18,
+                                color: Colors.grey,
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => YogaPoseDetailScreen(
+                                        title: title, image: 'images/default_yoga.png'
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
       ),
     )
-        : const NoInternetScreen();
+
+    : const NoInternetScreen();
   }
 }
 

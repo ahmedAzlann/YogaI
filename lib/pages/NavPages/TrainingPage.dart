@@ -102,8 +102,22 @@ class _TrainingpageState extends State<Trainingpage> {
 
   Widget build(BuildContext context) {
     return  Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.grey[100],
+          elevation: 0,
+          title: Text(
+            "YogAI",
+
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
+              color: Colors.black,
+            ),
+          ),
+        ),
               backgroundColor: Colors.grey[100],
               body: SingleChildScrollView(
+                physics: BouncingScrollPhysics(),
                 scrollDirection: Axis.vertical,
                 child: SafeArea(child:
                 Padding(

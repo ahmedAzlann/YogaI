@@ -30,19 +30,7 @@ int _currentPage = 0;
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: Colors.grey[100],
-        elevation: 0,
-        title: Text(
-          "YogAI",
 
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 28,
-            color: Colors.black,
-          ),
-        ),
-      ),
       body: _pages[_currentPage],
 
       bottomNavigationBar: BottomNavigationBar(

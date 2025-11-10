@@ -1,6 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -8,6 +10,7 @@ import '../models/PoseDetailSheet.dart';
 import '../models/PoseModel.dart';
 import '../services/settings_manager.dart';
 import 'ReadyScreen.dart';
+import 'UserDataCollectionPages/completed_session_page.dart';
 
 class YogaPlayerScreen extends StatefulWidget {
   final List<PoseModel> poses;
@@ -28,7 +31,7 @@ class YogaPlayerScreen extends StatefulWidget {
 
 class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
   bool _isPaused = false;
-  late final player;
+   late final player;
   late int currentIndex;
   final FlutterTts _tts = FlutterTts();
   late int secondsLeft;
@@ -47,7 +50,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     super.initState();
     currentIndex = widget.index;
     player = AudioCache();
-    _loadSettings();
+     _loadSettings();
 
 
      }
@@ -147,9 +150,22 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     _goNext();
   }
 
-  void _onSkip() async {
+
+  Future<void> _onSkip() async {
+    await _tts.stop();
+
+    // play bell sound
+    try {
+      final player = AudioPlayer();
+      await player.play(AssetSource('hectorbell.mp3'));
+    } catch (e) {
+      debugPrint("Sound play error: $e");
+    }
+
+    // slight delay
+    await Future.delayed(const Duration(milliseconds: 400));
+
     await _markProgress('skipped');
-    // player.play('assets/whistle.mp3 ');
     _goNext();
   }
 
@@ -184,7 +200,16 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       }
 
       if (secondsLeft <= 0) {
+
         _timer?.cancel();
+        try {
+          final player = AudioPlayer();
+          await player.play(AssetSource('hectorbell.mp3'));
+        } catch (e) {
+          debugPrint("Sound play error: $e");
+        }
+
+        await Future.delayed(const Duration(milliseconds: 200));
         _onDone();
       }
     });
@@ -198,15 +223,10 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       setState(() => currentIndex++);
 
       // optional: play whistle or transition sound here
-      try {
-        final player = AudioPlayer();
-        await player.play(AssetSource('whistle.mp3'));
-      } catch (e) {
-        debugPrint("Sound play error: $e");
-      }
+
 
       // delay slightly for the sound to register
-      await Future.delayed(const Duration(milliseconds: 400));
+      //await Future.delayed(const Duration(milliseconds: 400));
 
       // smooth animated transition to ReadyScreen
       Navigator.of(context).pushReplacement(
@@ -263,44 +283,52 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
   }
 
 
-  void _goPrevious() {
-    if (currentIndex > 0) {
-      setState(() => currentIndex--);
 
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 700),
-          pageBuilder: (context, animation, secondaryAnimation) => ReadyScreen(
-            poses: widget.poses,
-            index: currentIndex,
-            userId: widget.userId,
-            title: widget.title,
-          ),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            final offsetAnimation = Tween<Offset>(
-              begin: const Offset(-0.2, 0), // slide from left when going back
+  Future<void> _goPrevious() async {
+    await _tts.stop();
+
+    try {
+      final player = AudioPlayer();
+      await player.play(AssetSource('hectorbell.mp3'));
+    } catch (e) {
+      debugPrint("Sound play error: $e");
+    }
+
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    if (currentIndex <= 0) return;
+
+    setState(() => currentIndex--);
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: Duration(milliseconds: 700),
+        pageBuilder: (_, animation, __) => ReadyScreen(
+          poses: widget.poses,
+          index: currentIndex,
+          userId: widget.userId,
+          title: widget.title,
+        ),
+        transitionsBuilder: (_, animation, __, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: Offset(-0.2, 0),
               end: Offset.zero,
             ).animate(CurvedAnimation(
               parent: animation,
               curve: Curves.easeOutCubic,
-            ));
-
-            final fadeAnimation = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeInOut,
-            );
-
-            return SlideTransition(
-              position: offsetAnimation,
-              child: FadeTransition(
-                opacity: fadeAnimation,
-                child: child,
+            )),
+            child: FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
               ),
-            );
-          },
-        ),
-      );
-    }
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
   }
 
 
@@ -393,17 +421,48 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     }
   }
 
+  Future<void> logDailyActivity() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
 
-  void _finishSession() {
-    // simple completion screen or pop to list
-    Navigator.popUntil(context, (route) => route.isFirst);
-    // optionally show a dialog "Completed"
+    final todayId = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    final ref = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('activity_logs')
+        .doc(todayId);
+
+    await ref.set({
+      'done': true,
+      'timestamp': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
+
+
+  void _finishSession() async {
+    await logDailyActivity();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SessionCompletedScreen(
+          programName: widget.title,
+          exerciseCount: widget.poses.length,
+          calories: 0,
+          time: Duration.zero,
+        ),
+      ),
+    );
+  }
+
 
   @override
   void dispose() {
     _videoController?.dispose();
     super.dispose();
+    player.dispose();
+
   }
 
   @override
@@ -470,14 +529,23 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
               // Bottom section
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(30),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Exercise name + reps
+                      Text(
+                        "${currentIndex + 1} / ${widget.poses.length}",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Exercise Name + Info Button
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Flexible(
                             child: Text(
@@ -491,7 +559,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
                               textAlign: TextAlign.center,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           GestureDetector(
                             onTap: () => _showPoseInfo(pose),
                             child: const Icon(
@@ -502,72 +570,101 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
                           ),
                         ],
                       ),
-      
-      
-      
-      
-      
-                      const SizedBox(height: 16),
+
+                      const SizedBox(height: 20),
+
+                      // Timer
                       Text(
-                        "00:$secondsLeft",
+                        secondsLeft >= 10 ? "00:$secondsLeft" : "00:0$secondsLeft",
                         style: const TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 48,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
+                          height: 1,
                         ),
                       ),
-                      const SizedBox(height: 24),
-      
-      
-                      // DONE button (just above the bottom nav)
+
+                      const SizedBox(height: 28),
+
+                      // Pause/Resume Button
                       ElevatedButton.icon(
-                        onPressed: _isPaused?_resumeTimer : _pauseTimer,
-                        icon: Icon(_isPaused? Icons.play_arrow_rounded: Icons.pause, color: Colors.white),
+                        onPressed: _isPaused ? _resumeTimer : _pauseTimer,
+                        icon: Icon(
+                          _isPaused ? Icons.play_arrow_rounded : Icons.pause,
+                          color: Colors.white,
+                          size: 30,
+                        ),
                         label: Text(
                           _isPaused ? "Resume" : "Pause",
-                          style: const TextStyle(color: Colors.white, fontSize: 18),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 30),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
-                          minimumSize: const Size(220, 55),
+                          elevation: 4,
                         ),
                       ),
-                      const SizedBox(height: 80),
-      
-                      // Bottom nav (Previous / Skip)
-      
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                TextButton.icon(
-                                  onPressed: _goPrevious,
-                                  icon: const Icon(Icons.skip_previous, color: Colors.grey,size: 34,),
-                                  label: const Text(
-                                    "Previous",
-                                    style: TextStyle(color: Colors.grey,fontSize: 20),
-                                  ),
+
+                      const SizedBox(height: 70),
+
+                      // Navigation Row
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+
+                            // Previous
+                            TextButton.icon(
+                              onPressed: _goPrevious,
+                              icon: const Icon(
+                                Icons.skip_previous_rounded,
+                                color: Colors.grey,
+                                size: 34,
+                              ),
+                              label: const Text(
+                                "Previous",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                TextButton.icon(
-                                  onPressed: _onSkip,
-                                  icon: const Icon(Icons.skip_next, color: Colors.grey,size: 34,),
-                                  label: const Text(
-                                    "Skip",
-                                    style: TextStyle(color: Colors.grey,fontSize: 20),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
-      
-      
+
+                            // Skip
+                            TextButton.icon(
+                              onPressed: _onSkip,
+                              icon: const Icon(
+                                Icons.skip_next_rounded,
+                                color: Colors.grey,
+                                size: 34,
+                              ),
+                              label: const Text(
+                                "Skip",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+
+
             ],
           ),
         ),

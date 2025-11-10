@@ -136,6 +136,7 @@ class _YogaPoseDetailScreenState extends State<YogaPoseDetailScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
