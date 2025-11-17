@@ -11,6 +11,7 @@ import '../models/PoseModel.dart';
 import '../services/settings_manager.dart';
 import 'ReadyScreen.dart';
 import 'UserDataCollectionPages/completed_session_page.dart';
+import 'YogaCameraScreen.dart';
 
 class YogaPlayerScreen extends StatefulWidget {
   final List<PoseModel> poses;
@@ -31,7 +32,7 @@ class YogaPlayerScreen extends StatefulWidget {
 
 class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
   bool _isPaused = false;
-   late final player;
+  late final player;
   late int currentIndex;
   final FlutterTts _tts = FlutterTts();
   late int secondsLeft;
@@ -43,17 +44,13 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
   late bool voiceGuide;
   late bool coachTips;
 
-
-
   @override
   void initState() {
     super.initState();
     currentIndex = widget.index;
     player = AudioCache();
-     _loadSettings();
-
-
-     }
+    _loadSettings();
+  }
 
   void _loadSettings() async {
     secondsLeft = await SettingsManager.getRestTimer();
@@ -61,15 +58,12 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     coachTips = await SettingsManager.getCoachTips();
 
     og = secondsLeft;
-    middle = secondsLeft ~/ 2;      // correct
+    middle = secondsLeft ~/ 2; // correct
     announce = secondsLeft - 2;
 
     setState(() {});
     _startTimer();
   }
-
-
-
 
   Future<void> _speak(String text) async {
     String lang = await SettingsManager.getLanguage();
@@ -77,7 +71,6 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     await _tts.setSpeechRate(0.5);
     await _tts.speak(text);
   }
-
 
   void _initVideo() {
     final videoUrl = widget.poses[currentIndex].videoUrl;
@@ -125,31 +118,26 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
             'poseName': pose.name,
             'status': status,
             'timestamp': now,
-          }
-        ])
+          },
+        ]),
       });
     }
 
     // Fetch updated snapshot to calculate completion percent
     final updatedSnapshot = await titleDoc.get();
-    final completedPoses = (updatedSnapshot.data()?['completedPoses'] ?? []) as List;
+    final completedPoses =
+        (updatedSnapshot.data()?['completedPoses'] ?? []) as List;
     final totalCount = widget.poses.isEmpty ? 1 : widget.poses.length;
     final percent = ((completedPoses.length / totalCount) * 100).round();
 
     // Update progress percentage
-    await titleDoc.update({
-      'completionPercent': percent,
-      'lastUpdated': now,
-    });
+    await titleDoc.update({'completionPercent': percent, 'lastUpdated': now});
   }
-
-
 
   void _onDone() async {
     await _markProgress('completed');
     _goNext();
   }
-
 
   Future<void> _onSkip() async {
     await _tts.stop();
@@ -168,8 +156,6 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     await _markProgress('skipped');
     _goNext();
   }
-
-
 
   void _startTimer() {
     _timer?.cancel();
@@ -194,13 +180,13 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
         }
 
         // ✅ Last 3 seconds countdown only if voiceGuide enabled
-        if (voiceGuide && (secondsLeft == 3 || secondsLeft == 2 || secondsLeft == 1)) {
+        if (voiceGuide &&
+            (secondsLeft == 3 || secondsLeft == 2 || secondsLeft == 1)) {
           await _speak("$secondsLeft");
         }
       }
 
       if (secondsLeft <= 0) {
-
         _timer?.cancel();
         try {
           final player = AudioPlayer();
@@ -215,7 +201,6 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     });
   }
 
-
   void _goNext() async {
     await _markProgress('completed');
 
@@ -223,7 +208,6 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       setState(() => currentIndex++);
 
       // optional: play whistle or transition sound here
-
 
       // delay slightly for the sound to register
       //await Future.delayed(const Duration(milliseconds: 400));
@@ -239,13 +223,16 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
             title: widget.title,
           ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            final offsetAnimation = Tween<Offset>(
-              begin: const Offset(0.2, 0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            ));
+            final offsetAnimation =
+                Tween<Offset>(
+                  begin: const Offset(0.2, 0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                );
 
             final fadeAnimation = CurvedAnimation(
               parent: animation,
@@ -254,10 +241,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
 
             return SlideTransition(
               position: offsetAnimation,
-              child: FadeTransition(
-                opacity: fadeAnimation,
-                child: child,
-              ),
+              child: FadeTransition(opacity: fadeAnimation, child: child),
             );
           },
         ),
@@ -266,9 +250,6 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       _finishSession();
     }
   }
-
-
-
 
   void _pauseTimer() {
     setState(() {
@@ -281,8 +262,6 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       _isPaused = false;
     });
   }
-
-
 
   Future<void> _goPrevious() async {
     await _tts.stop();
@@ -311,13 +290,13 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
         ),
         transitionsBuilder: (_, animation, __, child) {
           return SlideTransition(
-            position: Tween<Offset>(
-              begin: Offset(-0.2, 0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            )),
+            position: Tween<Offset>(begin: Offset(-0.2, 0), end: Offset.zero)
+                .animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: FadeTransition(
               opacity: CurvedAnimation(
                 parent: animation,
@@ -330,8 +309,6 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       ),
     );
   }
-
-
 
   Widget _quitOption(BuildContext context, String text) {
     return InkWell(
@@ -356,6 +333,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       ),
     );
   }
+
   void _showPoseInfo(PoseModel pose) {
     _pauseTimer(); // <-- pause the timer before opening sheet
 
@@ -366,7 +344,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
       backgroundColor: Colors.white,
-      builder: (context) => PoseDetailSheet(pose: pose, index: currentIndex,),
+      builder: (context) => PoseDetailSheet(pose: pose, index: currentIndex),
     ).then((_) {
       // resume timer when sheet is closed
       if (_isPaused) _startTimer();
@@ -381,9 +359,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.blue.shade700,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -411,7 +387,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
             _quitOption(context, 'Too hard'),
             const SizedBox(height: 10),
             _quitOption(context, "Don't know how to do it"),
-           ],
+          ],
         ),
       ),
     );
@@ -439,7 +415,6 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     }, SetOptions(merge: true));
   }
 
-
   void _finishSession() async {
     await logDailyActivity();
 
@@ -456,25 +431,22 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
     );
   }
 
-
   @override
   void dispose() {
     _videoController?.dispose();
     super.dispose();
     player.dispose();
-
   }
 
   @override
   Widget build(BuildContext context) {
     final pose = widget.poses[currentIndex];
 
-    
     return PopScope(
-      canPop: false, // stops default popping
+      canPop: false,
       onPopInvoked: (didPop) async {
         if (!didPop) {
-          await _showbox(); // show your quit confirmation
+          await _showbox();
         }
       },
       child: Scaffold(
@@ -482,6 +454,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
         body: SafeArea(
           child: Column(
             children: [
+              // Top Image Section
               Stack(
                 children: [
                   ClipRRect(
@@ -489,50 +462,38 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
                       bottomLeft: Radius.circular(24),
                       bottomRight: Radius.circular(24),
                     ),
-                    child:
-                        Image.network(
-                        pose.imageUrl,
-                        height: 240,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                                     ),
-                  ),
-              /*    Container(
-                    height: 220,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.3),
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(24),
-                        bottomRight: Radius.circular(24),
-                      ),
+                    child: Image.network(
+                      pose.imageUrl,
+                      height: 240,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
                     ),
-                  ), */
+                  ),
                   Positioned(
                     top: 40,
                     left: 16,
                     child: CircleAvatar(
                       backgroundColor: Colors.black54,
                       child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: _showbox,
-                    ),
-      
-      
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: _showbox,
+                      ),
                     ),
                   ),
                 ],
               ),
-              // Top: Video or Image
-      
-      
-              // Bottom section
+
+              // Bottom Section
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 30,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Progress Indicator
                       Text(
                         "${currentIndex + 1} / ${widget.poses.length}",
                         style: const TextStyle(
@@ -543,7 +504,7 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
                       ),
                       const SizedBox(height: 10),
 
-                      // Exercise Name + Info Button
+                      // Pose Name + Info Button
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -575,7 +536,9 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
 
                       // Timer
                       Text(
-                        secondsLeft >= 10 ? "00:$secondsLeft" : "00:0$secondsLeft",
+                        secondsLeft >= 10
+                            ? "00:$secondsLeft"
+                            : "00:0$secondsLeft",
                         style: const TextStyle(
                           fontSize: 48,
                           fontWeight: FontWeight.w900,
@@ -604,7 +567,10 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
-                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 30),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 30,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -620,7 +586,6 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-
                             // Previous
                             TextButton.icon(
                               onPressed: _goPrevious,
@@ -663,17 +628,25 @@ class _YogaPlayerScreenState extends State<YogaPlayerScreen> {
                   ),
                 ),
               ),
-
-
             ],
           ),
         ),
+
+        // CAMERA BUTTON - CORRECTLY PLACED
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const YogaCameraScreen()),
+            );
+          },
+          backgroundColor: Colors.purple,
+          elevation: 6,
+          tooltip: 'Live Pose Detection',
+          child: const Icon(Icons.camera_alt, color: Colors.white, size: 28),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
-
   }
-
-
 }
-
-

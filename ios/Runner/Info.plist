@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>YogaAI needs camera to detect your pose in real-time.</string>
 </dict>
 </plist>

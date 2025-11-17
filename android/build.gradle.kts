@@ -17,14 +17,30 @@ val newBuildDir: Directory =
         .get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
-subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
+}
+
+// --- SINGLE COMBINED SUBPROJECTS BLOCK ---
+subprojects {
+    // Logic from the first block
+    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    project.layout.buildDirectory.value(newSubprojectBuildDir)
+
+    // REMOVED this line as it conflicts with afterEvaluate
+    // project.evaluationDependsOn(":app")
+
+    // Logic from the second block
+    afterEvaluate {
+        // Find if the subproject has an Android configuration
+        val androidExtension = project.extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
+        if (androidExtension != null) {
+            // If it has one, check if the namespace is missing
+            if (androidExtension.namespace == null) {
+                // Assign a namespace based on the project's group, or a fallback
+                val group = (project.group as? String) ?: "com.example.${project.name}"
+                androidExtension.namespace = group
+            }
+        }
+    }
 }
