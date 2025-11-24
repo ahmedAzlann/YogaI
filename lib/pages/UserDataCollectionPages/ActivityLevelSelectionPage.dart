@@ -1,8 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// lib/pages/UserDataCollectionPages/ActivityLevelSelectionScreen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:yogai/pages/HomePage.dart';
+import 'package:yogai/widgets/theme.dart';
 import 'package:yogai/pages/UserDataCollectionPages/WeeklyGoalSelectionPage.dart';
 
 class ActivityLevelSelectionScreen extends StatefulWidget {
@@ -10,27 +9,29 @@ class ActivityLevelSelectionScreen extends StatefulWidget {
   final String selectedGoal;
 
   const ActivityLevelSelectionScreen({
-    Key? key,
+    super.key,
     required this.usertype,
     required this.selectedGoal,
-  }) : super(key: key);
+  });
 
   @override
-  _ActivityLevelSelectionScreenState createState() => _ActivityLevelSelectionScreenState();
+  State<ActivityLevelSelectionScreen> createState() =>
+      _ActivityLevelSelectionScreenState();
 }
 
-class _ActivityLevelSelectionScreenState extends State<ActivityLevelSelectionScreen> {
+class _ActivityLevelSelectionScreenState
+    extends State<ActivityLevelSelectionScreen> {
   late String usertype;
   late String selectedGoal;
   String selectedActivityLevel = "";
-  int currentPage = 3;
-  int totalPages = 6;
+  final int currentPage = 3;
+  final int totalPages = 6;
 
-  List<String> activityLevels = [
-    "Sedentary",
-    "Lightly Active",
-    "Active",
-    "Very Active",
+  final List<Map<String, String>> activityLevels = [
+    {"title": "Sedentary", "image": "images/onboarding/seated.png"},
+    {"title": "Lightly Active", "image": "images/onboarding/core.png"},
+    {"title": "Active", "image": "images/onboarding/armbalance.png"},
+    {"title": "Very Active", "image": "images/onboarding/digestion.png"},
   ];
 
   @override
@@ -42,125 +43,207 @@ class _ActivityLevelSelectionScreenState extends State<ActivityLevelSelectionScr
 
   void goToNextScreen() {
     if (selectedActivityLevel.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select your activity level to proceed.")),
+      Get.snackbar(
+        "Oops!",
+        "Please select your activity level",
+        backgroundColor: Colors.white,
+        colorText: Colors.black87,
       );
       return;
     }
 
-    print("User Type: $usertype");
-    print("Selected Goal: $selectedGoal");
-    print("Activity Level: $selectedActivityLevel");
-
-    Get.to(() => WeeklyGoalSelectionPage(
-      usertype: usertype,
-      selectedGoal: selectedGoal,
-      selectedActivityLevel: selectedActivityLevel,
-    ));
-  }
-
-  AppBar buildProgressAppBar() {
-    return AppBar(
-      leading: currentPage > 0
-          ? IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => Navigator.pop(context),
-      )
-          : const SizedBox(width: 48),
-      title: LinearProgressIndicator(
-        value: (currentPage + 1) / totalPages,
-        backgroundColor: Colors.grey[300],
-        color: Colors.blue,
+    Get.to(
+      () => WeeklyGoalSelectionPage(
+        usertype: usertype,
+        selectedGoal: selectedGoal,
+        selectedActivityLevel: selectedActivityLevel,
       ),
-      actions: [
-        TextButton(
-          onPressed: skipfunction,
-          child: const Text("Skip", style: TextStyle(color: Colors.black)),
-        ),
-      ],
-      backgroundColor: Colors.grey[100],
-      elevation: 0,
     );
   }
 
-  Future<void> skipfunction() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (FirebaseAuth.instance.currentUser == null) {
-      await FirebaseAuth.instance.signInAnonymously();
-    }
-    await prefs.setBool('onboarding_done', true);
-    Get.offAll(() => Homepage());
+  PreferredSizeWidget buildProgressAppBar() {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        onPressed: () => Get.back(),
+      ),
+      title: LinearProgressIndicator(
+        value: (currentPage + 1) / totalPages,
+        backgroundColor: Colors.grey[300],
+        valueColor: AlwaysStoppedAnimation(YogAITheme.progressColor),
+        minHeight: 6,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Get.offAllNamed('/home'),
+          child: const Text(
+            "Skip",
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      flexibleSpace: Container(decoration: YogAITheme.onboardingGradient),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      extendBodyBehindAppBar: true,
       appBar: buildProgressAppBar(),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+      body: Container(
+        decoration: YogAITheme.onboardingGradient,
+        child: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "What is your activity level?",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              const SizedBox(height: 50),
+
+              // Title - Exactly like your old design
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  "How active are you?",
+                  style:
+                      Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        color: YogAITheme.darkText,
+                        height: 1.1,
+                      ) ??
+                      const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        color: YogAITheme.darkText,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
               ),
-              const SizedBox(height: 10),
-              const Text(
-                "Tell us how active you are in daily life",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 60),
+
+              // PERFECT 2×2 GRID — IDENTICAL TO YOUR OLD DESIGN
               Expanded(
-                child: ListView.builder(
+                child: GridView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 20,
+                    crossAxisSpacing: 20,
+                    childAspectRatio:
+                        0.78, // Same ratio as your old perfect cards
+                  ),
                   itemCount: activityLevels.length,
                   itemBuilder: (context, index) {
-                    String level = activityLevels[index];
-                    bool isSelected = selectedActivityLevel == level;
+                    final level = activityLevels[index];
+                    final bool isSelected =
+                        selectedActivityLevel == level["title"];
 
                     return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedActivityLevel = level;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 10),
-                        padding: const EdgeInsets.all(20),
+                      onTap: () => setState(
+                        () => selectedActivityLevel = level["title"]!,
+                      ),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.blue : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(15),
+                          color: isSelected
+                              ? YogAITheme.nextButtonColor
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isSelected
+                                  ? YogAITheme.nextButtonColor.withOpacity(0.5)
+                                  : Colors.black.withOpacity(0.1),
+                              blurRadius: isSelected ? 30 : 18,
+                              offset: const Offset(0, 12),
+                            ),
+                          ],
                         ),
-                        child: Text(
-                          level,
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: isSelected ? Colors.white : Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        child: Column(
+                          children: [
+                            // IMAGE — FULLY VISIBLE
+                            Expanded(
+                              flex: 7,
+                              child: ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(32),
+                                ),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(20),
+                                  child: Image.asset(
+                                    level["image"]!,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => Icon(
+                                      Icons.directions_run,
+                                      size: 70,
+                                      color: isSelected
+                                          ? Colors.white70
+                                          : Colors.grey[600],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // TITLE
+                            Expanded(
+                              flex: 3,
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: Text(
+                                    level["title"]!,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : YogAITheme.darkText,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
                   },
                 ),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+
+              // NEXT Button — Perfectly placed
+              Padding(
+                padding: const EdgeInsets.fromLTRB(40, 30, 40, 50),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: YogAITheme.nextButtonColor,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 64),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                    elevation: 16,
+                    shadowColor: YogAITheme.nextButtonColor.withOpacity(0.6),
+                  ),
+                  onPressed: goToNextScreen,
+                  child: const Text(
+                    "NEXT",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                    ),
                   ),
                 ),
-                onPressed: goToNextScreen,
-                child: const Text(
-                  "NEXT",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
               ),
-              const SizedBox(height: 30),
             ],
           ),
         ),

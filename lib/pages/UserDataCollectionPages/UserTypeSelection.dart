@@ -1,163 +1,224 @@
+// lib/pages/UserDataCollectionPages/UserTypeSelectionScreen.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yogai/pages/HomePage.dart';
 import 'package:yogai/pages/UserDataCollectionPages/MainGoalSelectionPage.dart';
+import 'package:yogai/widgets/theme.dart';
 
 class UserTypeSelectionScreen extends StatefulWidget {
+  const UserTypeSelectionScreen({super.key});
+
   @override
-  _UserTypeSelectionScreenState createState() => _UserTypeSelectionScreenState();
+  State<UserTypeSelectionScreen> createState() =>
+      _UserTypeSelectionScreenState();
 }
 
 class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen> {
-  String selectedType = "General"; // Default
-  int currentPage = 1;
-  int totalPages = 6;
+  int selectedIndex = 0;
+  final int currentPage = 1;
+  final int totalPages = 6;
+
+  final List<Map<String, String>> userTypes = [
+    {"title": "General User", "image": "images/seated.png"},
+    {"title": "Disabled User", "image": "images/onboarding/disabled.png"},
+  ];
 
   Future<void> skipfunction() async {
     final prefs = await SharedPreferences.getInstance();
-
-    // If user is already logged in, skip re-signing
     if (FirebaseAuth.instance.currentUser == null) {
       await FirebaseAuth.instance.signInAnonymously();
     }
-
     await prefs.setBool('onboarding_done', true);
-    Get.offAll(() => Homepage());
+    Get.offAll(() => const Homepage());
   }
 
   void goToNextScreen() {
-    print("Selected User Type: $selectedType");
-    Get.to(() => MainGoalSelectionScreen(selectedType));
+    final selected = selectedIndex == 0 ? "General" : "Disabled";
+    Get.to(() => MainGoalSelectionScreen(selected));
   }
 
-  AppBar buildProgressAppBar(
-      BuildContext context,
-      int currentPage,
-      int totalPages,
-      VoidCallback onBack,
-      VoidCallback onSkip,
-      ) {
+  PreferredSizeWidget buildProgressAppBar() {
     return AppBar(
-      leading: currentPage > 0
-          ? IconButton(
-        icon: Icon(Icons.arrow_back),
-        onPressed: onBack,
-      )
-          : SizedBox(width: 48),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        onPressed: () => Get.back(),
+      ),
       title: LinearProgressIndicator(
         value: (currentPage + 1) / totalPages,
         backgroundColor: Colors.grey[300],
-        color: Colors.blue,
+        valueColor: AlwaysStoppedAnimation(YogAITheme.progressColor),
+        minHeight: 6,
       ),
       actions: [
         TextButton(
-          onPressed: onSkip,
-          child: Text("Skip", style: TextStyle(color: Colors.black)),
+          onPressed: skipfunction,
+          child: const Text(
+            "Skip",
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ],
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.transparent,
       elevation: 0,
+      flexibleSpace: Container(decoration: YogAITheme.onboardingGradient),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: buildProgressAppBar(
-        context,
-        currentPage,
-        totalPages,
-            () => Navigator.pop(context),
-        skipfunction,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+      extendBodyBehindAppBar: true,
+      appBar: buildProgressAppBar(),
+      body: Container(
+        decoration: YogAITheme.onboardingGradient,
+        child: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 40),
+
+              // Title
               Text(
                 "Select your type",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style:
+                    Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: YogAITheme.darkText,
+                      height: 1.1,
+                    ) ??
+                    const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      color: YogAITheme.darkText,
+                    ),
+                textAlign: TextAlign.center,
               ),
-              SizedBox(height: 10),
-              Text(
-                "This helps us recommend exercises suited for you",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              SizedBox(height: 40),
+              const SizedBox(height: 50),
 
-              // Option Cards
-              _buildOptionCard(
-                label: "General User",
-                icon: Icons.person,
-                type: "General",
-              ),
-              SizedBox(height: 20),
-              _buildOptionCard(
-                label: "Disabled User",
-                icon: Icons.accessible,
-                type: "Disabled",
+              // TWO PERFECT CARDS — NO OVERFLOW, FULL IMAGES
+              Expanded(
+                child: Column(
+                  children: List.generate(userTypes.length, (index) {
+                    final item = userTypes[index];
+                    final isSelected = selectedIndex == index;
+
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: index == 0 ? 0 : 16,
+                        ),
+                        child: GestureDetector(
+                          onTap: () => setState(() => selectedIndex = index),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOutCubic,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? YogAITheme.nextButtonColor
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(36),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isSelected
+                                      ? YogAITheme.nextButtonColor.withOpacity(
+                                          0.5,
+                                        )
+                                      : Colors.black.withOpacity(0.1),
+                                  blurRadius: isSelected ? 35 : 20,
+                                  offset: const Offset(0, 12),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                // IMAGE — FULLY VISIBLE
+                                Expanded(
+                                  flex: 7,
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(36),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Image.asset(
+                                        item["image"]!,
+                                        fit: BoxFit.contain,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        errorBuilder: (_, __, ___) => Icon(
+                                          index == 0
+                                              ? Icons.person
+                                              : Icons.accessible,
+                                          size: 80,
+                                          color: isSelected
+                                              ? Colors.white70
+                                              : Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // TITLE
+                                Expanded(
+                                  flex: 3,
+                                  child: Center(
+                                    child: Text(
+                                      item["title"]!,
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : YogAITheme.darkText,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
               ),
 
-              Spacer(),
-
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  minimumSize: Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+              // NEXT Button — Always visible
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 20,
+                ),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: YogAITheme.nextButtonColor,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 64),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                    elevation: 16,
+                    shadowColor: YogAITheme.nextButtonColor.withOpacity(0.6),
+                  ),
+                  onPressed: goToNextScreen,
+                  child: const Text(
+                    "NEXT",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                    ),
                   ),
                 ),
-                onPressed: goToNextScreen,
-                child: Text(
-                  "NEXT",
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
               ),
+              const SizedBox(height: 30),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOptionCard({
-    required String label,
-    required IconData icon,
-    required String type,
-  }) {
-    final isSelected = selectedType == type;
-    return GestureDetector(
-      onTap: () {
-        setState(() => selectedType = type);
-      },
-      child: Container(
-        padding: EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.grey[200],
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 40, color: isSelected ? Colors.white : Colors.black),
-            SizedBox(width: 20),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 20,
-                color: isSelected ? Colors.white : Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
         ),
       ),
     );

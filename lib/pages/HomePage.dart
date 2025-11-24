@@ -6,8 +6,6 @@ import 'package:yogai/pages/NavPages/TrainingPage.dart';
 
 import 'package:flutter/services.dart';
 
-
-
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
 
@@ -15,14 +13,13 @@ class Homepage extends StatefulWidget {
   State<Homepage> createState() => _HomepageState();
 }
 
-
 class _HomepageState extends State<Homepage> {
-int _currentPage = 0;
+  int _currentPage = 0;
 
   final _pages = [
-    Trainingpage(),
-    Discoverpage(),
-    Reportpage(),
+    const Trainingpage(),
+    const Discoverpage(),
+    const Reportpage(),
     SettingsPage(),
   ];
 
@@ -30,50 +27,25 @@ int _currentPage = 0;
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-
       body: _pages[_currentPage],
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentPage,
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedLabelStyle: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-        selectedItemColor: Colors.blue,
+        selectedItemColor: const Color(0xFFFF6B6B), // Your brand orange
         unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
         showSelectedLabels: true,
-        onTap: (index) {
-          setState(() {
-            _currentPage = index;  // Switch page index
-          });
-        },
-        items: [
-          //training
+        showUnselectedLabels: true,
+        onTap: (index) => setState(() => _currentPage = index),
+        items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.lock_clock),
+            icon: Icon(Icons.self_improvement),
             label: "Training",
           ),
-
-          //discover
-          BottomNavigationBarItem(
-            icon: Icon(Icons.compass_calibration),
-            label: "Discover",
-          ),
-
-          //report
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            label: "Report",
-          ),
-
-          //settings
+          BottomNavigationBarItem(icon: Icon(Icons.explore), label: "Discover"),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Report"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Settings"),
         ],
       ),

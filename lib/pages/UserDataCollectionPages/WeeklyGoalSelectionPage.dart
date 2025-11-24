@@ -1,9 +1,11 @@
+// lib/pages/UserDataCollectionPages/WeeklyGoalSelectionPage.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yogai/pages/HomePage.dart';
 import 'package:yogai/pages/UserDataCollectionPages/PhysicalStatsInputScreen.dart';
+import 'package:yogai/widgets/theme.dart';
 
 class WeeklyGoalSelectionPage extends StatefulWidget {
   final String usertype;
@@ -11,14 +13,15 @@ class WeeklyGoalSelectionPage extends StatefulWidget {
   final String selectedActivityLevel;
 
   const WeeklyGoalSelectionPage({
-    Key? key,
-    required this.selectedActivityLevel,
+    super.key,
     required this.usertype,
     required this.selectedGoal,
-  }) : super(key: key);
+    required this.selectedActivityLevel,
+  });
 
   @override
-  _WeeklyGoalSelectionPageState createState() => _WeeklyGoalSelectionPageState();
+  State<WeeklyGoalSelectionPage> createState() =>
+      _WeeklyGoalSelectionPageState();
 }
 
 class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
@@ -26,14 +29,9 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
   late String selectedGoal;
   late String selectedActivityLevel;
 
-  int currentPage = 4;
-  int totalPages = 6;
+  final int currentPage = 4;
+  final int totalPages = 6;
   int selectedSessions = 3;
-  String selectedFirstDay = "SUNDAY";
-
-  List<String> weekDays = [
-    "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"
-  ];
 
   @override
   void initState() {
@@ -44,16 +42,15 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
   }
 
   void goToNextScreen() {
-    print("Weekly Goal: $selectedSessions, First day: $selectedFirstDay");
-
-    // Use only Get.to() (no Navigator here)
-    Get.to(() => PhysicalStatsInputScreen(
-      usertype: usertype,
-      selectedGoal: selectedGoal,
-      selectedActivityLevel: selectedActivityLevel,
-      selectedSessions: selectedSessions,
-      selectedFirstDay: selectedFirstDay,
-    ));
+    Get.to(
+      () => PhysicalStatsInputScreen(
+        usertype: usertype,
+        selectedGoal: selectedGoal,
+        selectedActivityLevel: selectedActivityLevel,
+        selectedSessions: selectedSessions,
+        selectedFirstDay: "SUNDAY", // You can make this dynamic later if needed
+      ),
+    );
   }
 
   Future<void> skipfunction() async {
@@ -62,126 +59,179 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
       await FirebaseAuth.instance.signInAnonymously();
     }
     await prefs.setBool('onboarding_done', true);
-    Get.offAll(() => Homepage());
+    Get.offAll(() => const Homepage());
   }
 
-  AppBar buildProgressAppBar(BuildContext context, int currentPage, int totalPages, VoidCallback onBack, VoidCallback onSkip) {
+  PreferredSizeWidget buildProgressAppBar() {
     return AppBar(
-      leading: currentPage > 0
-          ? IconButton(
-        icon: Icon(Icons.arrow_back),
-        onPressed: onBack,
-      )
-          : SizedBox(width: 48),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        onPressed: () => Get.back(),
+      ),
       title: LinearProgressIndicator(
         value: (currentPage + 1) / totalPages,
         backgroundColor: Colors.grey[300],
-        color: Colors.blue,
+        valueColor: AlwaysStoppedAnimation(YogAITheme.progressColor),
       ),
       actions: [
         TextButton(
-          onPressed: onSkip,
-          child: Text("Skip", style: TextStyle(color: Colors.black)),
+          onPressed: skipfunction,
+          child: const Text("Skip", style: TextStyle(color: Colors.black87)),
         ),
       ],
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.transparent,
       elevation: 0,
+      flexibleSpace: Container(decoration: YogAITheme.onboardingGradient),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: buildProgressAppBar(
-        context,
-        currentPage,
-        totalPages,
-            () => Get.back(), // consistent GetX back navigation
-        skipfunction,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Set your weekly goal", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
-              Text("We recommend at least 3 days for a better result.", style: TextStyle(fontSize: 16, color: Colors.grey)),
-              SizedBox(height: 30),
+      extendBodyBehindAppBar: true,
+      appBar: buildProgressAppBar(),
+      body: Container(
+        decoration: YogAITheme.onboardingGradient,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              children: [
+                const SizedBox(height: 70),
 
-              // Weekly Goal Buttons
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: List.generate(7, (index) {
-                  int dayCount = index + 1;
-                  bool isSelected = selectedSessions == dayCount;
-                  return GestureDetector(
-                    onTap: () => setState(() => selectedSessions = dayCount),
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.blue : Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
+                // Title
+                Text(
+                  "How many days per week?",
+                  style:
+                      Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        color: YogAITheme.darkText,
+                      ) ??
+                      const TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w700,
+                        color: YogAITheme.darkText,
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        "$dayCount",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : Colors.black,
-                        ),
+                ),
+
+                const SizedBox(height: 60),
+
+                // GIANT ANIMATED NUMBER — BACK AND BETTER
+                TweenAnimationBuilder<int>(
+                  tween: IntTween(begin: 3, end: selectedSessions),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Text(
+                      '$value',
+                      style: TextStyle(
+                        fontSize: 110,
+                        fontWeight: FontWeight.bold,
+                        color: YogAITheme.nextButtonColor,
+                        height: 1.0,
+                        shadows: [
+                          Shadow(
+                            color: YogAITheme.nextButtonColor.withOpacity(0.4),
+                            blurRadius: 30,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "days per week",
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: Colors.black.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                const SizedBox(height: 60),
+
+                // PREMIUM CUSTOM SLIDER
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    activeTrackColor: YogAITheme.nextButtonColor,
+                    inactiveTrackColor: Colors.grey[300],
+                    thumbColor: YogAITheme.nextButtonColor,
+                    overlayColor: YogAITheme.nextButtonColor.withOpacity(0.2),
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 18,
+                    ),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 36,
+                    ),
+                    trackHeight: 10,
+                  ),
+                  child: Slider(
+                    value: selectedSessions.toDouble(),
+                    min: 3,
+                    max: 7,
+                    divisions: 4,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedSessions = value.round();
+                      });
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Day Labels
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(5, (i) {
+                    final day = i + 3;
+                    final isSelected = day == selectedSessions;
+                    return Text(
+                      '$day',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? YogAITheme.nextButtonColor
+                            : Colors.black54,
+                      ),
+                    );
+                  }),
+                ),
+
+                const Spacer(),
+
+                // NEXT Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: YogAITheme.nextButtonColor,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 58),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      elevation: 12,
+                      shadowColor: YogAITheme.nextButtonColor.withOpacity(0.5),
+                    ),
+                    onPressed: goToNextScreen,
+                    child: const Text(
+                      "NEXT",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
                       ),
                     ),
-                  );
-                }),
-              ),
-
-              SizedBox(height: 40),
-
-              Text("First day of the week", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
-
-              // Dropdown
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: DropdownButton<String>(
-                  value: selectedFirstDay,
-                  isExpanded: true,
-                  underline: SizedBox(),
-                  items: weekDays.map((day) {
-                    return DropdownMenuItem<String>(
-                      value: day,
-                      child: Text(day, style: TextStyle(fontSize: 18)),
-                    );
-                  }).toList(),
-                  onChanged: (value) => setState(() => selectedFirstDay = value!),
-                ),
-              ),
-
-              Spacer(),
-
-              // NEXT Button
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  minimumSize: Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                ),
-                onPressed: goToNextScreen,
-                child: Text("NEXT", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-              ),
-
-              SizedBox(height: 30),
-            ],
+                const SizedBox(height: 50),
+              ],
+            ),
           ),
         ),
       ),
